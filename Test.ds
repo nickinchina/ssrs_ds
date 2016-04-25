@@ -3,5 +3,4 @@
   <SQL>select * from company</SQL>
   <Parameters Name="test" DbType="1" />
   <Parameters Name="test1" DbType="4" />
-  <Parameters DbType="0" />
 </Command>
