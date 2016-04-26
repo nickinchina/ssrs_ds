@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="utf-16"?>
 <Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <SQL>SELECT id, name FROM pz_dim_store limit :p1;
+  <SQL>SELECT id, name FROM pz_dim_store a 
+ WHERE :p1 IS NULL OR id = ANY(string_to_array(:p1,',')::int[])
+UNION
+SELECT NULL AS id,'(All)' AS name
+ WHERE :p2 = 1
+ ORDER BY name;
+
 </SQL>
-  <Parameters Name="limitcount" DbType="9" />
+  <Parameters Name="UserID" DbType="22" />
+  <Parameters Name="UnionNull" DbType="9" />
   <ColumnSchema>&lt;DocumentElement&gt;
   &lt;SchemaTable&gt;
     &lt;AllowDBNull&gt;true&lt;/AllowDBNull&gt;
@@ -36,7 +43,7 @@
     &lt;BaseTableName /&gt;
     &lt;ColumnName&gt;name&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
-    &lt;ColumnSize&gt;200&lt;/ColumnSize&gt;
+    &lt;ColumnSize&gt;-1&lt;/ColumnSize&gt;
     &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
     &lt;IsUnique&gt;false&lt;/IsUnique&gt;
     &lt;IsKey&gt;false&lt;/IsKey&gt;
