@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-16"?>
 <Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <SQL>SELECT id, name as new FROM pz_dim_store a 
+  <SQL>SELECT id, name FROM pz_dim_store a 
  WHERE :p1 IS NULL OR id = ANY(string_to_array(:p1,',')::int[])
 UNION
-SELECT NULL AS id,'(All)' AS new
+SELECT NULL AS id,'(All)' AS name
  WHERE :p2 = 1
- ORDER BY new;
+ ORDER BY name;
 
 </SQL>
   <Parameters Name="UserID" DbType="22" />
@@ -38,10 +38,10 @@ SELECT NULL AS id,'(All)' AS new
   &lt;SchemaTable&gt;
     &lt;AllowDBNull&gt;true&lt;/AllowDBNull&gt;
     &lt;BaseCatalogName /&gt;
-    &lt;BaseColumnName&gt;new&lt;/BaseColumnName&gt;
+    &lt;BaseColumnName&gt;name&lt;/BaseColumnName&gt;
     &lt;BaseSchemaName /&gt;
     &lt;BaseTableName /&gt;
-    &lt;ColumnName&gt;new&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;name&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
     &lt;ColumnSize&gt;-1&lt;/ColumnSize&gt;
     &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
