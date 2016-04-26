@@ -2,7 +2,6 @@
 <Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <SQL>select * from pz_product where accountid=:p1</SQL>
   <Parameters Name="aid" DbType="9" />
-  <Parameters Name="cid" DbType="9" />
   <ColumnSchema>&lt;DocumentElement&gt;
   &lt;SchemaTable&gt;
     &lt;AllowDBNull&gt;true&lt;/AllowDBNull&gt;
