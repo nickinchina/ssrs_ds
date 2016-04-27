@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-16"?>
+<Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <SQL>SELECT id, name FROM dim_fuelgrade a;</SQL>
+  <Parameters Name="DataSource" DbType="9" />
+  <ColumnSchema>&lt;DocumentElement&gt;
+  &lt;SchemaTable&gt;
+    &lt;AllowDBNull&gt;true&lt;/AllowDBNull&gt;
+    &lt;BaseCatalogName /&gt;
+    &lt;BaseColumnName&gt;id&lt;/BaseColumnName&gt;
+    &lt;BaseSchemaName /&gt;
+    &lt;BaseTableName /&gt;
+    &lt;ColumnName&gt;id&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;1&lt;/ColumnOrdinal&gt;
+    &lt;ColumnSize&gt;4&lt;/ColumnSize&gt;
+    &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+    &lt;IsUnique&gt;false&lt;/IsUnique&gt;
+    &lt;IsKey&gt;false&lt;/IsKey&gt;
+    &lt;IsAliased&gt;false&lt;/IsAliased&gt;
+    &lt;IsExpression&gt;false&lt;/IsExpression&gt;
+    &lt;IsIdentity&gt;false&lt;/IsIdentity&gt;
+    &lt;IsAutoIncrement&gt;false&lt;/IsAutoIncrement&gt;
+    &lt;IsRowVersion&gt;false&lt;/IsRowVersion&gt;
+    &lt;IsHidden&gt;false&lt;/IsHidden&gt;
+    &lt;IsLong&gt;false&lt;/IsLong&gt;
+    &lt;IsReadOnly&gt;false&lt;/IsReadOnly&gt;
+    &lt;NumericPrecision&gt;0&lt;/NumericPrecision&gt;
+    &lt;NumericScale&gt;0&lt;/NumericScale&gt;
+    &lt;ProviderType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/ProviderType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;AllowDBNull&gt;true&lt;/AllowDBNull&gt;
+    &lt;BaseCatalogName /&gt;
+    &lt;BaseColumnName&gt;name&lt;/BaseColumnName&gt;
+    &lt;BaseSchemaName /&gt;
+    &lt;BaseTableName /&gt;
+    &lt;ColumnName&gt;name&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
+    &lt;ColumnSize&gt;100&lt;/ColumnSize&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+    &lt;IsUnique&gt;false&lt;/IsUnique&gt;
+    &lt;IsKey&gt;false&lt;/IsKey&gt;
+    &lt;IsAliased&gt;false&lt;/IsAliased&gt;
+    &lt;IsExpression&gt;false&lt;/IsExpression&gt;
+    &lt;IsIdentity&gt;false&lt;/IsIdentity&gt;
+    &lt;IsAutoIncrement&gt;false&lt;/IsAutoIncrement&gt;
+    &lt;IsRowVersion&gt;false&lt;/IsRowVersion&gt;
+    &lt;IsHidden&gt;false&lt;/IsHidden&gt;
+    &lt;IsLong&gt;false&lt;/IsLong&gt;
+    &lt;IsReadOnly&gt;false&lt;/IsReadOnly&gt;
+    &lt;NumericPrecision&gt;0&lt;/NumericPrecision&gt;
+    &lt;NumericScale&gt;0&lt;/NumericScale&gt;
+    &lt;ProviderType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/ProviderType&gt;
+  &lt;/SchemaTable&gt;
+&lt;/DocumentElement&gt;</ColumnSchema>
+</Command>
