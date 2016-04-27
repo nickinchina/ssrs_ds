@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-16"?>
+<Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <SQL>WITH entity AS (
+  SELECT DISTINCT entityid FROM fact_item_purchase a WHERE COALESCE(:p2, 1) = 1
+   UNION
+  SELECT DISTINCT entityid FROM fact_fuel_purchase a WHERE COALESCE(:p2, 1) = 2
+   UNION
+  SELECT DISTINCT entityid FROM fact_ap a WHERE COALESCE(:p2, 1) = 3
+)
+SELECT NULL AS id,'(All)' AS name WHERE COALESCE(:p1, 0) = 1
+ UNION
+SELECT id, name FROM dim_vendor a INNER JOIN entity b ON a.id = b.entityid
+ UNION
+SELECT id, name FROM dim_vendor a WHERE COALESCE(:p2, 1) NOT IN (1,2,3)
+ ORDER BY name;</SQL>
+  <Parameters Name="DataSource" DbType="9" />
+  <Parameters Name="UnionNull" DbType="9" />
+  <Parameters Name="Type" DbType="9" />
+  <ColumnSchema>&lt;DocumentElement&gt;
+  &lt;SchemaTable&gt;
+    &lt;AllowDBNull&gt;true&lt;/AllowDBNull&gt;
+    &lt;BaseCatalogName /&gt;
+    &lt;BaseColumnName&gt;id&lt;/BaseColumnName&gt;
+    &lt;BaseSchemaName /&gt;
+    &lt;BaseTableName /&gt;
+    &lt;ColumnName&gt;id&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;1&lt;/ColumnOrdinal&gt;
+    &lt;ColumnSize&gt;4&lt;/ColumnSize&gt;
+    &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+    &lt;IsUnique&gt;false&lt;/IsUnique&gt;
+    &lt;IsKey&gt;false&lt;/IsKey&gt;
+    &lt;IsAliased&gt;false&lt;/IsAliased&gt;
+    &lt;IsExpression&gt;false&lt;/IsExpression&gt;
+    &lt;IsIdentity&gt;false&lt;/IsIdentity&gt;
+    &lt;IsAutoIncrement&gt;false&lt;/IsAutoIncrement&gt;
+    &lt;IsRowVersion&gt;false&lt;/IsRowVersion&gt;
+    &lt;IsHidden&gt;false&lt;/IsHidden&gt;
+    &lt;IsLong&gt;false&lt;/IsLong&gt;
+    &lt;IsReadOnly&gt;false&lt;/IsReadOnly&gt;
+    &lt;NumericPrecision&gt;0&lt;/NumericPrecision&gt;
+    &lt;NumericScale&gt;0&lt;/NumericScale&gt;
+    &lt;ProviderType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/ProviderType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;AllowDBNull&gt;true&lt;/AllowDBNull&gt;
+    &lt;BaseCatalogName /&gt;
+    &lt;BaseColumnName&gt;name&lt;/BaseColumnName&gt;
+    &lt;BaseSchemaName /&gt;
+    &lt;BaseTableName /&gt;
+    &lt;ColumnName&gt;name&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
+    &lt;ColumnSize&gt;-1&lt;/ColumnSize&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+    &lt;IsUnique&gt;false&lt;/IsUnique&gt;
+    &lt;IsKey&gt;false&lt;/IsKey&gt;
+    &lt;IsAliased&gt;false&lt;/IsAliased&gt;
+    &lt;IsExpression&gt;false&lt;/IsExpression&gt;
+    &lt;IsIdentity&gt;false&lt;/IsIdentity&gt;
+    &lt;IsAutoIncrement&gt;false&lt;/IsAutoIncrement&gt;
+    &lt;IsRowVersion&gt;false&lt;/IsRowVersion&gt;
+    &lt;IsHidden&gt;false&lt;/IsHidden&gt;
+    &lt;IsLong&gt;false&lt;/IsLong&gt;
+    &lt;IsReadOnly&gt;false&lt;/IsReadOnly&gt;
+    &lt;NumericPrecision&gt;0&lt;/NumericPrecision&gt;
+    &lt;NumericScale&gt;0&lt;/NumericScale&gt;
+    &lt;ProviderType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/ProviderType&gt;
+  &lt;/SchemaTable&gt;
+&lt;/DocumentElement&gt;</ColumnSchema>
+</Command>
