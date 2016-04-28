@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-16"?>
 <Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <SQL>select * from pz_category where id in (:p1,:p2)</SQL>
-  <Parameters Name="test" DbType="9" />
-  <Parameters Name="test1" DbType="9" />
+  <Parameters Name="DataSource" DbType="9" />
+  <Parameters Name="p1" DbType="9" />
+  <Parameters Name="p2" DbType="9" />
   <ColumnSchema>&lt;DocumentElement&gt;
   &lt;SchemaTable&gt;
     &lt;AllowDBNull&gt;true&lt;/AllowDBNull&gt;
@@ -319,4 +320,5 @@
     &lt;ProviderType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/ProviderType&gt;
   &lt;/SchemaTable&gt;
 &lt;/DocumentElement&gt;</ColumnSchema>
+  <DataSample>&lt;DocumentElement /&gt;</DataSample>
 </Command>
