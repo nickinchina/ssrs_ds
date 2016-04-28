@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-16"?>
 <Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <SQL>select :p1::text as TaxonID,:p2::text as StationID, :p3::date as StartDate, :p4::date as EndDate, :p5::text as Category;
+  <SQL>select :p1::text as TaxonID,:p2::text as StationID, :p3::date as StartDate, :p4::date as EndDate, :p5::int as Type;
 
 </SQL>
   <Parameters Name="DataSource" DbType="9" />
@@ -111,13 +111,13 @@
   &lt;SchemaTable&gt;
     &lt;AllowDBNull&gt;true&lt;/AllowDBNull&gt;
     &lt;BaseCatalogName /&gt;
-    &lt;BaseColumnName&gt;category&lt;/BaseColumnName&gt;
+    &lt;BaseColumnName&gt;type&lt;/BaseColumnName&gt;
     &lt;BaseSchemaName /&gt;
     &lt;BaseTableName /&gt;
-    &lt;ColumnName&gt;category&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;type&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;5&lt;/ColumnOrdinal&gt;
-    &lt;ColumnSize&gt;-1&lt;/ColumnSize&gt;
-    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+    &lt;ColumnSize&gt;4&lt;/ColumnSize&gt;
+    &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
     &lt;IsUnique&gt;false&lt;/IsUnique&gt;
     &lt;IsKey&gt;false&lt;/IsKey&gt;
     &lt;IsAliased&gt;false&lt;/IsAliased&gt;
@@ -130,7 +130,7 @@
     &lt;IsReadOnly&gt;false&lt;/IsReadOnly&gt;
     &lt;NumericPrecision&gt;0&lt;/NumericPrecision&gt;
     &lt;NumericScale&gt;0&lt;/NumericScale&gt;
-    &lt;ProviderType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/ProviderType&gt;
+    &lt;ProviderType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/ProviderType&gt;
   &lt;/SchemaTable&gt;
 &lt;/DocumentElement&gt;</ColumnSchema>
 </Command>
