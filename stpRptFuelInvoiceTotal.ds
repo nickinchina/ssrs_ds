@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-16"?>
 <Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <SQL>WITH invttl AS (
+  <SQL>--Migrated by Lucky, On April.28,2016
+WITH invttl AS (
   SELECT DISTINCT accountid, tranid, siteid, tranref, recon_date, tranamount, entityid, invoice_date, computedamount
     FROM fact_fuel_purchase a)
 SELECT b.id AS "StationID", a.entityid AS "VENDOR", b.name AS "Station", a.invoice_date AS "FuelInvoiceDate", a.recon_date AS "FuelReconDate",
