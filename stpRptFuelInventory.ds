@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-16"?>
 <Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <SQL>SELECT b.id AS "StationID", b.name AS "StationName", a.trandate AS "SalesDate", c.name AS "FuelName", 0::int AS "TankID",
+  <SQL>--Migrated by Lucky, On April.28,2016
+SELECT b.id AS "StationID", b.name AS "StationName", a.trandate AS "SalesDate", c.name AS "FuelName", 0::int AS "TankID",
        COALESCE(a.grossqty, 0) AS "GPurchase", COALESCE(a.netqty, 0) AS "NPurchase", COALESCE(a.sold, 0) AS "Sales", 
        COALESCE(a.qty, 0) - (COALESCE(a.open, 0) + COALESCE(a.grossqty, 0) + COALESCE(a.sold, 0)) AS "GOverShort", 
        COALESCE(a.qty, 0) - (COALESCE(a.open, 0) + COALESCE(a.netqty, 0) + COALESCE(a.sold, 0)) AS "NOverShort", 
