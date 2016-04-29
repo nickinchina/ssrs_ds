@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-16"?>
 <Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <SQL>select null as id,'(All)' as name where :p2=1
-union all
-select id,name from dim_store a where :p1 is null or id = any(string_to_array(:p1,',')::int[]) 
-order by name</SQL>
+  <SQL>--Migrated by Lucky, On April.28,2016
+SELECT NULL AS id, '(All)' AS name WHERE :p2=1
+ UNION ALL
+SELECT id, name FROM dim_store a WHERE :p1 IS NULL OR id = ANY(string_to_array(:p1,',')::int[]) 
+ ORDER BY name</SQL>
   <Parameters Name="DataSource" DbType="9" />
   <Parameters Name="UserID" DbType="19" />
   <Parameters Name="UnionNull" DbType="9" />
