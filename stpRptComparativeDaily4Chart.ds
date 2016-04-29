@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-16"?>
+<Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <SQL>select :p1::text as StationID, :p2::date as EndDate;</SQL>
+  <Parameters Name="DataSource" DbType="9" />
+  <Parameters Name="StationID" DbType="19" />
+  <Parameters Name="EndDate" DbType="7" />
+  <ColumnSchema>&lt;DocumentElement&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;stationid&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;1&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;enddate&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+&lt;/DocumentElement&gt;</ColumnSchema>
+  <DataSample>&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;xs:schema id="NewDataSet" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"&gt;
+  &lt;xs:element name="NewDataSet" msdata:IsDataSet="true" msdata:MainDataTable="stpRptComparativeDaily4Chart" msdata:UseCurrentLocale="true"&gt;
+    &lt;xs:complexType&gt;
+      &lt;xs:choice minOccurs="0" maxOccurs="unbounded"&gt;
+        &lt;xs:element name="stpRptComparativeDaily4Chart"&gt;
+          &lt;xs:complexType&gt;
+            &lt;xs:sequence&gt;
+              &lt;xs:element name="stationid" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="enddate" type="xs:dateTime" minOccurs="0" /&gt;
+            &lt;/xs:sequence&gt;
+          &lt;/xs:complexType&gt;
+        &lt;/xs:element&gt;
+      &lt;/xs:choice&gt;
+    &lt;/xs:complexType&gt;
+  &lt;/xs:element&gt;
+&lt;/xs:schema&gt;</DataSample>
+</Command>
