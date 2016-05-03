@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-16"?>
 <Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <SQL>;WITH dateParam1 AS (
-SELECT (:p1 + (7 - EXTRACT(DOW FROM :p1) )::integer) AS "EndDate", 
-       ((:p1 + (7 - EXTRACT(DOW FROM :p1) )::integer) - Interval '6 week')::date AS "StartDate"
+SELECT (:p1 + (7 - EXTRACT(DOW FROM :p1) - 1)::integer) AS "EndDate", 
+       ((:p1 + (7 - EXTRACT(DOW FROM :p1) - 1)::integer) - Interval '6 week')::date AS "StartDate"
 ),
 dateParam2 AS (
 SELECT "EndDate", ("StartDate" + (1 - EXTRACT(DOW FROM "StartDate") )::integer) AS "StartDate", to_char("EndDate", 'WW') AS "weekEnd" FROM dateParam1
