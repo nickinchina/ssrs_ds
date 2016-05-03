@@ -1,85 +1,66 @@
 <?xml version="1.0" encoding="utf-16"?>
 <Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <SQL>select :p1::text as StationID, :p2::date as StartDate, :p3::date as EndDate;
-</SQL>
+  <SQL>--Migrated by Lucky, On May.03,2016
+SELECT c.name AS "FuelName", SUM(COALESCE(a.qty, 0)) AS "closestick", SUM(COALESCE(a.qty, 0) * COALESCE(a.cal_wcost, 0)) AS "closestickD", 
+       SUM(COALESCE(a.overshort, 0)) AS "overshort", SUM(COALESCE(a.overshort, 0) * COALESCE(a.cal_wcost, 0)) AS "overshortD" 
+  FROM fact_fuel_inventory a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN dim_fuelgrade c ON a.varid = c.id 
+ WHERE b.id = ANY(string_to_array(:p1, ',')::int[]) AND a.trandate &gt;= :p2 AND a.trandate &lt;= :p3 
+ GROUP BY "FuelName";</SQL>
   <Parameters Name="DataSource" DbType="9" />
   <Parameters Name="StationID" DbType="19" />
   <Parameters Name="StartDate" DbType="7" />
   <Parameters Name="EndDate" DbType="7" />
   <ColumnSchema>&lt;DocumentElement&gt;
   &lt;SchemaTable&gt;
-    &lt;AllowDBNull&gt;true&lt;/AllowDBNull&gt;
-    &lt;BaseCatalogName /&gt;
-    &lt;BaseColumnName&gt;stationid&lt;/BaseColumnName&gt;
-    &lt;BaseSchemaName /&gt;
-    &lt;BaseTableName /&gt;
-    &lt;ColumnName&gt;stationid&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;FuelName&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;1&lt;/ColumnOrdinal&gt;
-    &lt;ColumnSize&gt;-1&lt;/ColumnSize&gt;
     &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
-    &lt;IsUnique&gt;false&lt;/IsUnique&gt;
-    &lt;IsKey&gt;false&lt;/IsKey&gt;
-    &lt;IsAliased&gt;false&lt;/IsAliased&gt;
-    &lt;IsExpression&gt;false&lt;/IsExpression&gt;
-    &lt;IsIdentity&gt;false&lt;/IsIdentity&gt;
-    &lt;IsAutoIncrement&gt;false&lt;/IsAutoIncrement&gt;
-    &lt;IsRowVersion&gt;false&lt;/IsRowVersion&gt;
-    &lt;IsHidden&gt;false&lt;/IsHidden&gt;
-    &lt;IsLong&gt;false&lt;/IsLong&gt;
-    &lt;IsReadOnly&gt;false&lt;/IsReadOnly&gt;
-    &lt;NumericPrecision&gt;0&lt;/NumericPrecision&gt;
-    &lt;NumericScale&gt;0&lt;/NumericScale&gt;
-    &lt;ProviderType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/ProviderType&gt;
   &lt;/SchemaTable&gt;
   &lt;SchemaTable&gt;
-    &lt;AllowDBNull&gt;true&lt;/AllowDBNull&gt;
-    &lt;BaseCatalogName /&gt;
-    &lt;BaseColumnName&gt;startdate&lt;/BaseColumnName&gt;
-    &lt;BaseSchemaName /&gt;
-    &lt;BaseTableName /&gt;
-    &lt;ColumnName&gt;startdate&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;closestick&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
-    &lt;ColumnSize&gt;4&lt;/ColumnSize&gt;
-    &lt;DataType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
-    &lt;IsUnique&gt;false&lt;/IsUnique&gt;
-    &lt;IsKey&gt;false&lt;/IsKey&gt;
-    &lt;IsAliased&gt;false&lt;/IsAliased&gt;
-    &lt;IsExpression&gt;false&lt;/IsExpression&gt;
-    &lt;IsIdentity&gt;false&lt;/IsIdentity&gt;
-    &lt;IsAutoIncrement&gt;false&lt;/IsAutoIncrement&gt;
-    &lt;IsRowVersion&gt;false&lt;/IsRowVersion&gt;
-    &lt;IsHidden&gt;false&lt;/IsHidden&gt;
-    &lt;IsLong&gt;false&lt;/IsLong&gt;
-    &lt;IsReadOnly&gt;false&lt;/IsReadOnly&gt;
-    &lt;NumericPrecision&gt;0&lt;/NumericPrecision&gt;
-    &lt;NumericScale&gt;0&lt;/NumericScale&gt;
-    &lt;ProviderSpecificDataType&gt;NpgsqlTypes.NpgsqlDate, Npgsql, Version=0.0.0.0, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7&lt;/ProviderSpecificDataType&gt;
-    &lt;ProviderType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/ProviderType&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
   &lt;/SchemaTable&gt;
   &lt;SchemaTable&gt;
-    &lt;AllowDBNull&gt;true&lt;/AllowDBNull&gt;
-    &lt;BaseCatalogName /&gt;
-    &lt;BaseColumnName&gt;enddate&lt;/BaseColumnName&gt;
-    &lt;BaseSchemaName /&gt;
-    &lt;BaseTableName /&gt;
-    &lt;ColumnName&gt;enddate&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;closestickD&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;3&lt;/ColumnOrdinal&gt;
-    &lt;ColumnSize&gt;4&lt;/ColumnSize&gt;
-    &lt;DataType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
-    &lt;IsUnique&gt;false&lt;/IsUnique&gt;
-    &lt;IsKey&gt;false&lt;/IsKey&gt;
-    &lt;IsAliased&gt;false&lt;/IsAliased&gt;
-    &lt;IsExpression&gt;false&lt;/IsExpression&gt;
-    &lt;IsIdentity&gt;false&lt;/IsIdentity&gt;
-    &lt;IsAutoIncrement&gt;false&lt;/IsAutoIncrement&gt;
-    &lt;IsRowVersion&gt;false&lt;/IsRowVersion&gt;
-    &lt;IsHidden&gt;false&lt;/IsHidden&gt;
-    &lt;IsLong&gt;false&lt;/IsLong&gt;
-    &lt;IsReadOnly&gt;false&lt;/IsReadOnly&gt;
-    &lt;NumericPrecision&gt;0&lt;/NumericPrecision&gt;
-    &lt;NumericScale&gt;0&lt;/NumericScale&gt;
-    &lt;ProviderSpecificDataType&gt;NpgsqlTypes.NpgsqlDate, Npgsql, Version=0.0.0.0, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7&lt;/ProviderSpecificDataType&gt;
-    &lt;ProviderType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/ProviderType&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;overshort&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;4&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;overshortD&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;5&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
   &lt;/SchemaTable&gt;
 &lt;/DocumentElement&gt;</ColumnSchema>
+  <DataSample>&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;xs:schema id="NewDataSet" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"&gt;
+  &lt;xs:element name="NewDataSet" msdata:IsDataSet="true" msdata:MainDataTable="stpRptBPFuelInventory" msdata:UseCurrentLocale="true"&gt;
+    &lt;xs:complexType&gt;
+      &lt;xs:choice minOccurs="0" maxOccurs="unbounded"&gt;
+        &lt;xs:element name="stpRptBPFuelInventory"&gt;
+          &lt;xs:complexType&gt;
+            &lt;xs:sequence&gt;
+              &lt;xs:element name="FuelName" minOccurs="0"&gt;
+                &lt;xs:simpleType&gt;
+                  &lt;xs:restriction base="xs:string"&gt;
+                    &lt;xs:maxLength value="100" /&gt;
+                  &lt;/xs:restriction&gt;
+                &lt;/xs:simpleType&gt;
+              &lt;/xs:element&gt;
+              &lt;xs:element name="closestick" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="closestickD" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="overshort" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="overshortD" type="xs:double" minOccurs="0" /&gt;
+            &lt;/xs:sequence&gt;
+          &lt;/xs:complexType&gt;
+        &lt;/xs:element&gt;
+      &lt;/xs:choice&gt;
+    &lt;/xs:complexType&gt;
+  &lt;/xs:element&gt;
+&lt;/xs:schema&gt;</DataSample>
 </Command>
