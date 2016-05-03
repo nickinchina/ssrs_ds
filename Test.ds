@@ -1,74 +1,59 @@
 <?xml version="1.0" encoding="utf-16"?>
 <Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <SQL>select * from pz_category where id in (:p1,:p2)</SQL>
+  <SQL>;WITH dateParam1 AS (
+SELECT (:p1 + (7 - EXTRACT(DOW FROM :p1) )::integer) AS "EndDate", 
+       ((:p1 + (7 - EXTRACT(DOW FROM :p1) )::integer) - Interval '6 week')::date AS "StartDate"
+),
+dateParam2 AS (
+SELECT "EndDate", ("StartDate" + (1 - EXTRACT(DOW FROM "StartDate") )::integer) AS "StartDate", to_char("EndDate", 'WW') AS "weekEnd" FROM dateParam1
+),
+dateParam3 AS (
+SELECT "EndDate", "StartDate", "weekEnd", 
+       to_char("EndDate", 'YYYYWW')::int - 100 AS "wkvalueLastEnd", 
+       to_char("StartDate", 'YYYYWW')::int - 100 AS "wkvalueLastStart",
+       to_char("EndDate", 'YYYYWW')::int AS "wkvalueThisEnd", 
+       to_char("StartDate", 'YYYYWW')::int AS "wkvalueThisStart"
+
+        FROM dateParam2
+)
+SELECT * FROM dateParam3;</SQL>
   <Parameters Name="DataSource" DbType="9" />
-  <Parameters Name="p1" DbType="9" />
-  <Parameters Name="p2" DbType="9" />
+  <Parameters Name="EndDate" DbType="7" />
   <ColumnSchema>&lt;DocumentElement&gt;
   &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;id&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;EndDate&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;1&lt;/ColumnOrdinal&gt;
-    &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+    &lt;DataType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
   &lt;/SchemaTable&gt;
   &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;accountid&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;StartDate&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
-    &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+    &lt;DataType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
   &lt;/SchemaTable&gt;
   &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;name&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;weekEnd&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;3&lt;/ColumnOrdinal&gt;
     &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
   &lt;/SchemaTable&gt;
   &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;inactive&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;wkvalueLastEnd&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;4&lt;/ColumnOrdinal&gt;
-    &lt;DataType&gt;System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+    &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
   &lt;/SchemaTable&gt;
   &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;props&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;wkvalueLastStart&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;5&lt;/ColumnOrdinal&gt;
-    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+    &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
   &lt;/SchemaTable&gt;
   &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;mergeto&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;wkvalueThisEnd&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;6&lt;/ColumnOrdinal&gt;
     &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
   &lt;/SchemaTable&gt;
   &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;prodtype&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;wkvalueThisStart&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;7&lt;/ColumnOrdinal&gt;
     &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
-  &lt;/SchemaTable&gt;
-  &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;createdAt&lt;/ColumnName&gt;
-    &lt;ColumnOrdinal&gt;8&lt;/ColumnOrdinal&gt;
-    &lt;DataType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
-  &lt;/SchemaTable&gt;
-  &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;updatedAt&lt;/ColumnName&gt;
-    &lt;ColumnOrdinal&gt;9&lt;/ColumnOrdinal&gt;
-    &lt;DataType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
-  &lt;/SchemaTable&gt;
-  &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;parentid&lt;/ColumnName&gt;
-    &lt;ColumnOrdinal&gt;10&lt;/ColumnOrdinal&gt;
-    &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
-  &lt;/SchemaTable&gt;
-  &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;images&lt;/ColumnName&gt;
-    &lt;ColumnOrdinal&gt;11&lt;/ColumnOrdinal&gt;
-    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
-  &lt;/SchemaTable&gt;
-  &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;taxons&lt;/ColumnName&gt;
-    &lt;ColumnOrdinal&gt;12&lt;/ColumnOrdinal&gt;
-    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
-  &lt;/SchemaTable&gt;
-  &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;posids&lt;/ColumnName&gt;
-    &lt;ColumnOrdinal&gt;13&lt;/ColumnOrdinal&gt;
-    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
   &lt;/SchemaTable&gt;
 &lt;/DocumentElement&gt;</ColumnSchema>
   <DataSample>&lt;?xml version="1.0" encoding="utf-16"?&gt;
@@ -79,25 +64,13 @@
         &lt;xs:element name="Test"&gt;
           &lt;xs:complexType&gt;
             &lt;xs:sequence&gt;
-              &lt;xs:element name="id" type="xs:int" minOccurs="0" /&gt;
-              &lt;xs:element name="accountid" type="xs:int" minOccurs="0" /&gt;
-              &lt;xs:element name="name" minOccurs="0"&gt;
-                &lt;xs:simpleType&gt;
-                  &lt;xs:restriction base="xs:string"&gt;
-                    &lt;xs:maxLength value="100" /&gt;
-                  &lt;/xs:restriction&gt;
-                &lt;/xs:simpleType&gt;
-              &lt;/xs:element&gt;
-              &lt;xs:element name="inactive" type="xs:boolean" minOccurs="0" /&gt;
-              &lt;xs:element name="props" type="xs:string" minOccurs="0" /&gt;
-              &lt;xs:element name="mergeto" type="xs:int" minOccurs="0" /&gt;
-              &lt;xs:element name="prodtype" type="xs:int" minOccurs="0" /&gt;
-              &lt;xs:element name="createdAt" type="xs:dateTime" minOccurs="0" /&gt;
-              &lt;xs:element name="updatedAt" type="xs:dateTime" minOccurs="0" /&gt;
-              &lt;xs:element name="parentid" type="xs:int" minOccurs="0" /&gt;
-              &lt;xs:element name="images" type="xs:string" minOccurs="0" /&gt;
-              &lt;xs:element name="taxons" type="xs:string" minOccurs="0" /&gt;
-              &lt;xs:element name="posids" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="EndDate" type="xs:dateTime" minOccurs="0" /&gt;
+              &lt;xs:element name="StartDate" type="xs:dateTime" minOccurs="0" /&gt;
+              &lt;xs:element name="weekEnd" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="wkvalueLastEnd" type="xs:int" minOccurs="0" /&gt;
+              &lt;xs:element name="wkvalueLastStart" type="xs:int" minOccurs="0" /&gt;
+              &lt;xs:element name="wkvalueThisEnd" type="xs:int" minOccurs="0" /&gt;
+              &lt;xs:element name="wkvalueThisStart" type="xs:int" minOccurs="0" /&gt;
             &lt;/xs:sequence&gt;
           &lt;/xs:complexType&gt;
         &lt;/xs:element&gt;
