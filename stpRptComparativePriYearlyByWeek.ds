@@ -1,25 +1,118 @@
 <?xml version="1.0" encoding="utf-16"?>
 <Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <SQL>select :p1::text as TaxonID,:p2::text as StationID, :p3::date as EndDate;</SQL>
+  <SQL>--Migrated by Lucky, On May.03,2016
+--postgreSql DOW(DayOfWeek) 0-6 is different from SQL Server 1-7
+WITH dateParam1 AS (
+SELECT ((:p3 + (6 - EXTRACT(DOW FROM :p3))::integer) - Interval '6 week')::date AS "StartDate",
+       (:p3 + (6 - EXTRACT(DOW FROM :p3))::integer)::date AS "EndDate"
+),
+dateParam2 AS (
+SELECT ("StartDate" - EXTRACT(DOW FROM "StartDate")::integer) AS "StartDate", "EndDate", to_char("EndDate", 'WW')::int AS "weekEnd" FROM dateParam1
+),
+dateParam3 AS (
+SELECT "StartDate", "EndDate", "weekEnd", 
+       to_char("StartDate", 'YYYYWW')::int - 100 AS "wkvalueLastStart",
+       to_char("EndDate", 'YYYYWW')::int - 100 AS "wkvalueLastEnd" 
+  FROM dateParam2
+),
+thisYearFuel AS (
+SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "StationID",
+       CASE WHEN :p1 = 'default' THEN b.name::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "Station",
+       to_char(a.trandate, 'YYYY')::int AS "y", (1 + d."weekEnd" - to_char(a.trandate, 'WW')::int) AS "wk",
+     to_char(a.trandate, 'YYYYWW')::int AS "wkvalue", c.name AS "SKU", 
+     SUM(a.qty) AS "SalesQty", SUM(a.amount) AS "SalesRevenue", SUM(a.amount-cal_wcost*qty) AS "Profit"
+  FROM fact_fuel_sales a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN dim_fuelgrade c ON a.varid = c.id, dateParam3 d 
+ WHERE a.siteid = ANY(string_to_array(:p2,',')::int[]) AND a.trandate&gt;=d."StartDate" AND a.trandate&lt;=d."EndDate"
+ GROUP BY "StationID", "Station", "SKU", "y", "wk", "wkvalue"
+),
+thisYearCategory AS (
+SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "StationID",
+       CASE WHEN :p1 = 'default' THEN b.name::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "Station",
+       to_char(a.trandate, 'YYYY')::int AS "y", (1 + d."weekEnd" - to_char(a.trandate, 'WW')::int) AS "wk",
+     to_char(a.trandate, 'YYYYWW')::int AS "wkvalue", c.name AS "SKU", 
+     SUM(a.qty) AS "SalesQty", SUM(a.amount) AS "SalesRevenue", SUM(a.amount-cal_wcost*qty) AS "Profit"
+  FROM fact_category_sales a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN dim_category c ON a.varid = c.id, dateParam3 d 
+ WHERE a.siteid = ANY(string_to_array(:p2,',')::int[]) AND a.trandate&gt;=d."StartDate" AND a.trandate&lt;=d."EndDate"
+ GROUP BY "StationID", "Station", "SKU", "y", "wk", "wkvalue"
+),
+lastYearFuel AS (
+SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "StationID",
+       to_char(a.trandate, 'YYYYWW')::int AS "wkvalue", c.name AS "SKU", 
+     SUM(a.qty) AS "SalesQty2", SUM(a.amount) AS "SalesRevenue2", SUM(a.amount-cal_wcost*qty) AS "Profit2"
+  FROM fact_fuel_sales a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN dim_fuelgrade c ON a.varid = c.id, dateParam3 d 
+ WHERE a.siteid = ANY(string_to_array(:p2,',')::int[]) 
+   AND to_char(a.trandate, 'YYYYWW')::int &gt;=d."wkvalueLastStart" AND to_char(a.trandate, 'YYYYWW')::int &lt;=d."wkvalueLastEnd"
+ GROUP BY "StationID", "SKU", "wkvalue"
+),
+lastYearCategory AS (
+SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "StationID",
+       to_char(a.trandate, 'YYYYWW')::int AS "wkvalue", c.name AS "SKU", 
+     SUM(a.qty) AS "SalesQty2", SUM(a.amount) AS "SalesRevenue2", SUM(a.amount-cal_wcost*qty) AS "Profit2"
+  FROM fact_category_sales a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN dim_category c ON a.varid = c.id, dateParam3 d 
+ WHERE a.siteid = ANY(string_to_array(:p2,',')::int[]) 
+   AND to_char(a.trandate, 'YYYYWW')::int &gt;=d."wkvalueLastStart" AND to_char(a.trandate, 'YYYYWW')::int &lt;=d."wkvalueLastEnd"
+ GROUP BY "StationID", "SKU", "wkvalue"
+),
+thisYear AS (SELECT a.* FROM thisYearFuel a UNION ALL SELECT b.* FROM thisYearCategory b),
+lastYear AS (SELECT a.* FROM lastYearFuel a UNION ALL SELECT b.* FROM lastYearCategory b)
+SELECT a."StationID", a."Station", a."wk", a."SKU", a."SalesQty", a."SalesRevenue", a."Profit",
+     COALESCE(b."SalesQty2", 0) AS "SalesQty2", COALESCE(b."SalesRevenue2", 0) AS "SalesRevenue2", COALESCE(b."Profit2", 0) AS "Profit2"
+  FROM thisYear a LEFT OUTER JOIN lastYear b ON a."StationID" = b."StationID" AND a."SKU" = b."SKU" AND a."wkvalue" = b."wkvalue" + 100
+ WHERE a."wk" &lt; 7;</SQL>
   <Parameters Name="DataSource" DbType="9" />
   <Parameters Name="TaxonID" DbType="19" />
   <Parameters Name="StationID" DbType="19" />
   <Parameters Name="EndDate" DbType="7" />
   <ColumnSchema>&lt;DocumentElement&gt;
   &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;taxonid&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;StationID&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;1&lt;/ColumnOrdinal&gt;
     &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
   &lt;/SchemaTable&gt;
   &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;stationid&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;Station&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
     &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
   &lt;/SchemaTable&gt;
   &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;enddate&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;wk&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;3&lt;/ColumnOrdinal&gt;
-    &lt;DataType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+    &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SKU&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;4&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SalesQty&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;5&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SalesRevenue&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;6&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Decimal, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Profit&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;7&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SalesQty2&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;8&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SalesRevenue2&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;9&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Decimal, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Profit2&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;10&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
   &lt;/SchemaTable&gt;
 &lt;/DocumentElement&gt;</ColumnSchema>
   <DataSample>&lt;?xml version="1.0" encoding="utf-16"?&gt;
@@ -30,9 +123,22 @@
         &lt;xs:element name="stpRptComparativePriYearlyByWeek"&gt;
           &lt;xs:complexType&gt;
             &lt;xs:sequence&gt;
-              &lt;xs:element name="taxonid" type="xs:string" minOccurs="0" /&gt;
-              &lt;xs:element name="stationid" type="xs:string" minOccurs="0" /&gt;
-              &lt;xs:element name="enddate" type="xs:dateTime" minOccurs="0" /&gt;
+              &lt;xs:element name="StationID" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="Station" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="wk" type="xs:int" minOccurs="0" /&gt;
+              &lt;xs:element name="SKU" minOccurs="0"&gt;
+                &lt;xs:simpleType&gt;
+                  &lt;xs:restriction base="xs:string"&gt;
+                    &lt;xs:maxLength value="100" /&gt;
+                  &lt;/xs:restriction&gt;
+                &lt;/xs:simpleType&gt;
+              &lt;/xs:element&gt;
+              &lt;xs:element name="SalesQty" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="SalesRevenue" type="xs:decimal" minOccurs="0" /&gt;
+              &lt;xs:element name="Profit" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="SalesQty2" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="SalesRevenue2" type="xs:decimal" minOccurs="0" /&gt;
+              &lt;xs:element name="Profit2" type="xs:double" minOccurs="0" /&gt;
             &lt;/xs:sequence&gt;
           &lt;/xs:complexType&gt;
         &lt;/xs:element&gt;
