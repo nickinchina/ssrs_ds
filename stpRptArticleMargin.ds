@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="utf-16"?>
 <Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <SQL>select :p1::text as TaxonID,:p2::text as StationID, :p3::date as StartDate, :p4::date as EndDate, :p5::text as Category;</SQL>
+  <SQL>--Migrated by Lucky, On May.03,2016
+SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "StationID",
+       CASE WHEN :p1 = 'default' THEN b.name::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "Station",
+       c.upc AS "SKU", c.name AS "ItemDescr", c.uom AS "Unit of Measure", 
+       SUM(a.qty) AS "TotalQty", SUM(a.amount) AS "TotalSell", SUM(a.qty*a.cal_wcost) AS "TotalCost"
+  FROM fact_item_sales a 
+ INNER JOIN dim_store b ON a.siteid= b.id
+ INNER JOIN dim_item c ON a.varid = c.id
+ WHERE a.siteid = ANY(string_to_array(:p2,',')::int[]) 
+   AND a.trandate&gt;=:p3 AND a.trandate&lt;=:p4   
+   AND c.categoryid = ANY(string_to_array(:p5,',')::int[])
+ GROUP BY "StationID","Station",c.upc,c.name,c.uom</SQL>
   <Parameters Name="DataSource" DbType="9" />
   <Parameters Name="TaxonID" DbType="19" />
   <Parameters Name="StationID" DbType="19" />
@@ -9,126 +20,67 @@
   <Parameters Name="Category" DbType="19" />
   <ColumnSchema>&lt;DocumentElement&gt;
   &lt;SchemaTable&gt;
-    &lt;AllowDBNull&gt;true&lt;/AllowDBNull&gt;
-    &lt;BaseCatalogName /&gt;
-    &lt;BaseColumnName&gt;taxonid&lt;/BaseColumnName&gt;
-    &lt;BaseSchemaName /&gt;
-    &lt;BaseTableName /&gt;
-    &lt;ColumnName&gt;taxonid&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;StationID&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;1&lt;/ColumnOrdinal&gt;
-    &lt;ColumnSize&gt;-1&lt;/ColumnSize&gt;
     &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
-    &lt;IsUnique&gt;false&lt;/IsUnique&gt;
-    &lt;IsKey&gt;false&lt;/IsKey&gt;
-    &lt;IsAliased&gt;false&lt;/IsAliased&gt;
-    &lt;IsExpression&gt;false&lt;/IsExpression&gt;
-    &lt;IsIdentity&gt;false&lt;/IsIdentity&gt;
-    &lt;IsAutoIncrement&gt;false&lt;/IsAutoIncrement&gt;
-    &lt;IsRowVersion&gt;false&lt;/IsRowVersion&gt;
-    &lt;IsHidden&gt;false&lt;/IsHidden&gt;
-    &lt;IsLong&gt;false&lt;/IsLong&gt;
-    &lt;IsReadOnly&gt;false&lt;/IsReadOnly&gt;
-    &lt;NumericPrecision&gt;0&lt;/NumericPrecision&gt;
-    &lt;NumericScale&gt;0&lt;/NumericScale&gt;
-    &lt;ProviderType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/ProviderType&gt;
   &lt;/SchemaTable&gt;
   &lt;SchemaTable&gt;
-    &lt;AllowDBNull&gt;true&lt;/AllowDBNull&gt;
-    &lt;BaseCatalogName /&gt;
-    &lt;BaseColumnName&gt;stationid&lt;/BaseColumnName&gt;
-    &lt;BaseSchemaName /&gt;
-    &lt;BaseTableName /&gt;
-    &lt;ColumnName&gt;stationid&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;Station&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
-    &lt;ColumnSize&gt;-1&lt;/ColumnSize&gt;
     &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
-    &lt;IsUnique&gt;false&lt;/IsUnique&gt;
-    &lt;IsKey&gt;false&lt;/IsKey&gt;
-    &lt;IsAliased&gt;false&lt;/IsAliased&gt;
-    &lt;IsExpression&gt;false&lt;/IsExpression&gt;
-    &lt;IsIdentity&gt;false&lt;/IsIdentity&gt;
-    &lt;IsAutoIncrement&gt;false&lt;/IsAutoIncrement&gt;
-    &lt;IsRowVersion&gt;false&lt;/IsRowVersion&gt;
-    &lt;IsHidden&gt;false&lt;/IsHidden&gt;
-    &lt;IsLong&gt;false&lt;/IsLong&gt;
-    &lt;IsReadOnly&gt;false&lt;/IsReadOnly&gt;
-    &lt;NumericPrecision&gt;0&lt;/NumericPrecision&gt;
-    &lt;NumericScale&gt;0&lt;/NumericScale&gt;
-    &lt;ProviderType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/ProviderType&gt;
   &lt;/SchemaTable&gt;
   &lt;SchemaTable&gt;
-    &lt;AllowDBNull&gt;true&lt;/AllowDBNull&gt;
-    &lt;BaseCatalogName /&gt;
-    &lt;BaseColumnName&gt;startdate&lt;/BaseColumnName&gt;
-    &lt;BaseSchemaName /&gt;
-    &lt;BaseTableName /&gt;
-    &lt;ColumnName&gt;startdate&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;SKU&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;3&lt;/ColumnOrdinal&gt;
-    &lt;ColumnSize&gt;4&lt;/ColumnSize&gt;
-    &lt;DataType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
-    &lt;IsUnique&gt;false&lt;/IsUnique&gt;
-    &lt;IsKey&gt;false&lt;/IsKey&gt;
-    &lt;IsAliased&gt;false&lt;/IsAliased&gt;
-    &lt;IsExpression&gt;false&lt;/IsExpression&gt;
-    &lt;IsIdentity&gt;false&lt;/IsIdentity&gt;
-    &lt;IsAutoIncrement&gt;false&lt;/IsAutoIncrement&gt;
-    &lt;IsRowVersion&gt;false&lt;/IsRowVersion&gt;
-    &lt;IsHidden&gt;false&lt;/IsHidden&gt;
-    &lt;IsLong&gt;false&lt;/IsLong&gt;
-    &lt;IsReadOnly&gt;false&lt;/IsReadOnly&gt;
-    &lt;NumericPrecision&gt;0&lt;/NumericPrecision&gt;
-    &lt;NumericScale&gt;0&lt;/NumericScale&gt;
-    &lt;ProviderSpecificDataType&gt;NpgsqlTypes.NpgsqlDate, Npgsql, Version=0.0.0.0, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7&lt;/ProviderSpecificDataType&gt;
-    &lt;ProviderType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/ProviderType&gt;
-  &lt;/SchemaTable&gt;
-  &lt;SchemaTable&gt;
-    &lt;AllowDBNull&gt;true&lt;/AllowDBNull&gt;
-    &lt;BaseCatalogName /&gt;
-    &lt;BaseColumnName&gt;enddate&lt;/BaseColumnName&gt;
-    &lt;BaseSchemaName /&gt;
-    &lt;BaseTableName /&gt;
-    &lt;ColumnName&gt;enddate&lt;/ColumnName&gt;
-    &lt;ColumnOrdinal&gt;4&lt;/ColumnOrdinal&gt;
-    &lt;ColumnSize&gt;4&lt;/ColumnSize&gt;
-    &lt;DataType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
-    &lt;IsUnique&gt;false&lt;/IsUnique&gt;
-    &lt;IsKey&gt;false&lt;/IsKey&gt;
-    &lt;IsAliased&gt;false&lt;/IsAliased&gt;
-    &lt;IsExpression&gt;false&lt;/IsExpression&gt;
-    &lt;IsIdentity&gt;false&lt;/IsIdentity&gt;
-    &lt;IsAutoIncrement&gt;false&lt;/IsAutoIncrement&gt;
-    &lt;IsRowVersion&gt;false&lt;/IsRowVersion&gt;
-    &lt;IsHidden&gt;false&lt;/IsHidden&gt;
-    &lt;IsLong&gt;false&lt;/IsLong&gt;
-    &lt;IsReadOnly&gt;false&lt;/IsReadOnly&gt;
-    &lt;NumericPrecision&gt;0&lt;/NumericPrecision&gt;
-    &lt;NumericScale&gt;0&lt;/NumericScale&gt;
-    &lt;ProviderSpecificDataType&gt;NpgsqlTypes.NpgsqlDate, Npgsql, Version=0.0.0.0, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7&lt;/ProviderSpecificDataType&gt;
-    &lt;ProviderType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/ProviderType&gt;
-  &lt;/SchemaTable&gt;
-  &lt;SchemaTable&gt;
-    &lt;AllowDBNull&gt;true&lt;/AllowDBNull&gt;
-    &lt;BaseCatalogName /&gt;
-    &lt;BaseColumnName&gt;category&lt;/BaseColumnName&gt;
-    &lt;BaseSchemaName /&gt;
-    &lt;BaseTableName /&gt;
-    &lt;ColumnName&gt;category&lt;/ColumnName&gt;
-    &lt;ColumnOrdinal&gt;5&lt;/ColumnOrdinal&gt;
-    &lt;ColumnSize&gt;-1&lt;/ColumnSize&gt;
     &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
-    &lt;IsUnique&gt;false&lt;/IsUnique&gt;
-    &lt;IsKey&gt;false&lt;/IsKey&gt;
-    &lt;IsAliased&gt;false&lt;/IsAliased&gt;
-    &lt;IsExpression&gt;false&lt;/IsExpression&gt;
-    &lt;IsIdentity&gt;false&lt;/IsIdentity&gt;
-    &lt;IsAutoIncrement&gt;false&lt;/IsAutoIncrement&gt;
-    &lt;IsRowVersion&gt;false&lt;/IsRowVersion&gt;
-    &lt;IsHidden&gt;false&lt;/IsHidden&gt;
-    &lt;IsLong&gt;false&lt;/IsLong&gt;
-    &lt;IsReadOnly&gt;false&lt;/IsReadOnly&gt;
-    &lt;NumericPrecision&gt;0&lt;/NumericPrecision&gt;
-    &lt;NumericScale&gt;0&lt;/NumericScale&gt;
-    &lt;ProviderType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/ProviderType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;ItemDescr&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;4&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Unit of Measure&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;5&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;TotalQty&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;6&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;TotalSell&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;7&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Decimal, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;TotalCost&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;8&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
   &lt;/SchemaTable&gt;
 &lt;/DocumentElement&gt;</ColumnSchema>
+  <DataSample>&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;xs:schema id="NewDataSet" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"&gt;
+  &lt;xs:element name="NewDataSet" msdata:IsDataSet="true" msdata:MainDataTable="stpRptArticleMargin" msdata:UseCurrentLocale="true"&gt;
+    &lt;xs:complexType&gt;
+      &lt;xs:choice minOccurs="0" maxOccurs="unbounded"&gt;
+        &lt;xs:element name="stpRptArticleMargin"&gt;
+          &lt;xs:complexType&gt;
+            &lt;xs:sequence&gt;
+              &lt;xs:element name="StationID" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="Station" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="SKU" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="ItemDescr" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="Unit_x0020_of_x0020_Measure" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="TotalQty" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="TotalSell" type="xs:decimal" minOccurs="0" /&gt;
+              &lt;xs:element name="TotalCost" type="xs:double" minOccurs="0" /&gt;
+            &lt;/xs:sequence&gt;
+          &lt;/xs:complexType&gt;
+        &lt;/xs:element&gt;
+      &lt;/xs:choice&gt;
+    &lt;/xs:complexType&gt;
+  &lt;/xs:element&gt;
+&lt;/xs:schema&gt;</DataSample>
 </Command>
