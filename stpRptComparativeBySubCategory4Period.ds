@@ -1,7 +1,60 @@
 <?xml version="1.0" encoding="utf-16"?>
 <Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <SQL>select :p1::text as StationID,:p2::date as Period1S, :p3::date as Period1E, :p4::date as Period2S,:p5::date as Period2E, :p6::int as Type;
-</SQL>
+  <SQL>--Migrated by Lucky, On May.03,2016
+WITH T as (
+SELECT c.subcategory,c.category,
+       CASE :p6 WHEN 0 THEN sum(a.amount-cal_wcost*qty) WHEN 1 THEN sum(a.amount) ELSE sum(a.qty) end AS amount1,
+       0 AS amount2
+  FROM fact_category_sales a
+ INNER JOIN dim_store b ON a.siteid= b.id
+ INNER JOIN dim_item c ON a.varid = c.id
+ WHERE a.siteid = ANY(string_to_array(:p1,',')::int[])
+   AND a.trandate&gt;=:p2 AND a.trandate&lt;=:p3
+ GROUP BY c.subcategory, c.category
+
+UNION
+
+SELECT c.subcategory,c.category,
+       CASE :p6 WHEN 0 THEN sum(a.amount-cal_wcost*qty) WHEN 1 THEN sum(a.amount) ELSE sum(a.qty) END AS amount1,
+       0 AS amount2   
+  FROM fact_fuel_sales a
+ INNER JOIN dim_store b ON a.siteid= b.id
+ INNER JOIN dim_item c ON a.varid = c.id
+ WHERE a.siteid = ANY(string_to_array(:p1,',')::int[]) 
+   AND a.trandate&gt;=:p2 AND a.trandate&lt;=:p3
+ GROUP BY c.subcategory, c.category
+      
+UNION
+
+SELECT c.subcategory ,c.category,
+       CASE :p6 WHEN 0 THEN sum(a.amount-cal_wcost*qty) WHEN 1 THEN sum(a.amount) ELSE sum(a.qty) END AS amount1,
+       0 AS amount2
+  FROM fact_category_sales a
+ INNER JOIN dim_store b on a.siteid= b.id
+ INNER JOIN dim_item c on a.varid = c.id
+ WHERE a.siteid = ANY(string_to_array(:p1,',')::int[]) 
+   AND a.trandate&gt;=:p4 AND a.trandate&lt;=:p5
+ GROUP BY c.subcategory, c.category
+
+UNION
+
+SELECT c.subcategory,c.category,
+       CASE :p6 WHEN 0 THEN sum(a.amount-cal_wcost*qty) WHEN 1 THEN sum(a.amount) ELSE sum(a.qty) END AS amount1,
+       0 AS amount2   
+  FROM fact_fuel_sales a
+ INNER JOIN dim_store b ON a.siteid= b.id
+ INNER JOIN dim_item c ON a.varid = c.id
+ WHERE a.siteid = ANY(string_to_array(:p1,',')::int[]) 
+   AND a.trandate&gt;=:p4 AND a.trandate&lt;=:p5
+ GROUP BY c.subcategory, c.category
+)
+
+SELECT subcategory AS "Sub Category",category as "Category",
+       SUM(amount1) as "Amount1",SUM(amount2) as "Amount2" 
+  FROM T
+ GROUP BY subcategory,category
+ ORDER BY subcategory,category;
+ </SQL>
   <Parameters Name="DataSource" DbType="9" />
   <Parameters Name="StationID" DbType="19" />
   <Parameters Name="Period1S" DbType="7" />
@@ -11,34 +64,24 @@
   <Parameters Name="Type" DbType="9" />
   <ColumnSchema>&lt;DocumentElement&gt;
   &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;stationid&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;Sub Category&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;1&lt;/ColumnOrdinal&gt;
     &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
   &lt;/SchemaTable&gt;
   &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;period1s&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;Category&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
-    &lt;DataType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
   &lt;/SchemaTable&gt;
   &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;period1e&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;Amount1&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;3&lt;/ColumnOrdinal&gt;
-    &lt;DataType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
   &lt;/SchemaTable&gt;
   &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;period2s&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;Amount2&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;4&lt;/ColumnOrdinal&gt;
-    &lt;DataType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
-  &lt;/SchemaTable&gt;
-  &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;period2e&lt;/ColumnName&gt;
-    &lt;ColumnOrdinal&gt;5&lt;/ColumnOrdinal&gt;
-    &lt;DataType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
-  &lt;/SchemaTable&gt;
-  &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;type&lt;/ColumnName&gt;
-    &lt;ColumnOrdinal&gt;6&lt;/ColumnOrdinal&gt;
-    &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+    &lt;DataType&gt;System.Int64, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
   &lt;/SchemaTable&gt;
 &lt;/DocumentElement&gt;</ColumnSchema>
   <DataSample>&lt;?xml version="1.0" encoding="utf-16"?&gt;
@@ -49,12 +92,10 @@
         &lt;xs:element name="stpRptComparativeBySubCategory4Period"&gt;
           &lt;xs:complexType&gt;
             &lt;xs:sequence&gt;
-              &lt;xs:element name="stationid" type="xs:string" minOccurs="0" /&gt;
-              &lt;xs:element name="period1s" type="xs:dateTime" minOccurs="0" /&gt;
-              &lt;xs:element name="period1e" type="xs:dateTime" minOccurs="0" /&gt;
-              &lt;xs:element name="period2s" type="xs:dateTime" minOccurs="0" /&gt;
-              &lt;xs:element name="period2e" type="xs:dateTime" minOccurs="0" /&gt;
-              &lt;xs:element name="type" type="xs:int" minOccurs="0" /&gt;
+              &lt;xs:element name="Sub_x0020_Category" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="Category" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="Amount1" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="Amount2" type="xs:long" minOccurs="0" /&gt;
             &lt;/xs:sequence&gt;
           &lt;/xs:complexType&gt;
         &lt;/xs:element&gt;
