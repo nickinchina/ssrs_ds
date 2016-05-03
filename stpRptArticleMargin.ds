@@ -11,7 +11,7 @@ SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path
  WHERE a.siteid = ANY(string_to_array(:p2,',')::int[]) 
    AND a.trandate&gt;=:p3 AND a.trandate&lt;=:p4   
    AND c.categoryid = ANY(string_to_array(:p5,',')::int[])
- GROUP BY "StationID","Station",c.upc,c.name,c.uom</SQL>
+ GROUP BY "StationID","Station",c.upc,c.name,c.uom;</SQL>
   <Parameters Name="DataSource" DbType="9" />
   <Parameters Name="TaxonID" DbType="19" />
   <Parameters Name="StationID" DbType="19" />
