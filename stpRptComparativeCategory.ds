@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-16"?>
 <Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <SQL>select :p1::text as StationID,:p2::date as StartDate, :p3::date as EndDate, 
+  <SQL>--pending
+select :p1::text as StationID,:p2::date as StartDate, :p3::date as EndDate, 
 :p4::int as Category1,:p5::int as Category2,:p6::int as Category3,:p7::int as Category4, :p8::int as Type;
 
 </SQL>
