@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-16"?>
+<Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <SQL>--Migrated by Lucky, On May.06,2016
+SELECT b.id AS "StationID", b.name AS "Station", d.name AS "VENDOR", c.upc AS "SCAN_IT", a.trandate AS "APDATE", 
+       a.cal_wcost AS "Cost", COALESCE(e.retail,0) AS "Sell",a.qty AS "QUANTITY", COALESCE(a.charge,0) AS "Rebate",
+       c.category AS "Category", c.name AS "Description", d.name AS "Supplier Name", a.tranref AS "INV_NUM"
+  FROM fact_item_purchase a INNER JOIN dim_store b ON a.siteid = b.id
+ INNER JOIN dim_item c ON a.varid = c.id INNER JOIN dim_vendor d ON a.entityid = d.id
+  LEFT JOIN fact_item_price e ON a.varid = e.varid
+ WHERE a.siteid = ANY(string_to_array(:p1,',')::int[]) AND a.trandate &gt;= :p2 AND a.trandate &lt;= :p3
+   AND d.id = ANY(string_to_array(:p4,',')::int[]) AND c.categoryid = ANY(string_to_array(:p5,',')::int[]) 
+   AND d.name NOT IN ('TI VENDOR') AND (e.packsize = 1 OR e. packsize IS NULL) AND c.taxons is not null 
+   AND c.taxons ~ replace(:p6,',','|') AND COALESCE(c.name,'') LIKE COALESCE(:p7,'') || '%';
+</SQL>
+  <Parameters Name="DataSource" DbType="9" />
+  <Parameters Name="StationID" DbType="19" />
+  <Parameters Name="StartDate" DbType="7" />
+  <Parameters Name="EndDate" DbType="7" />
+  <Parameters Name="Vendor" DbType="19" />
+  <Parameters Name="Dept" DbType="19" />
+  <Parameters Name="ItemGroup" DbType="19" />
+  <Parameters Name="ItemStart" DbType="19" />
+  <ColumnSchema>&lt;DocumentElement&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;StationID&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;1&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Station&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;VENDOR&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;3&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SCAN_IT&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;4&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;APDATE&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;5&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Cost&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;6&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Decimal, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Sell&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;7&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Decimal, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;QUANTITY&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;8&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Rebate&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;9&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Decimal, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Category&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;10&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Description&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;11&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Supplier Name&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;12&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;INV_NUM&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;13&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+&lt;/DocumentElement&gt;</ColumnSchema>
+  <DataSample>&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;xs:schema id="NewDataSet" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"&gt;
+  &lt;xs:element name="NewDataSet" msdata:IsDataSet="true" msdata:MainDataTable="stpRptNonFuelInvoices" msdata:UseCurrentLocale="true"&gt;
+    &lt;xs:complexType&gt;
+      &lt;xs:choice minOccurs="0" maxOccurs="unbounded"&gt;
+        &lt;xs:element name="stpRptNonFuelInvoices"&gt;
+          &lt;xs:complexType&gt;
+            &lt;xs:sequence&gt;
+              &lt;xs:element name="StationID" type="xs:int" minOccurs="0" /&gt;
+              &lt;xs:element name="Station" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="VENDOR" minOccurs="0"&gt;
+                &lt;xs:simpleType&gt;
+                  &lt;xs:restriction base="xs:string"&gt;
+                    &lt;xs:maxLength value="200" /&gt;
+                  &lt;/xs:restriction&gt;
+                &lt;/xs:simpleType&gt;
+              &lt;/xs:element&gt;
+              &lt;xs:element name="SCAN_IT" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="APDATE" type="xs:dateTime" minOccurs="0" /&gt;
+              &lt;xs:element name="Cost" type="xs:decimal" minOccurs="0" /&gt;
+              &lt;xs:element name="Sell" type="xs:decimal" minOccurs="0" /&gt;
+              &lt;xs:element name="QUANTITY" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="Rebate" type="xs:decimal" minOccurs="0" /&gt;
+              &lt;xs:element name="Category" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="Description" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="Supplier_x0020_Name" minOccurs="0"&gt;
+                &lt;xs:simpleType&gt;
+                  &lt;xs:restriction base="xs:string"&gt;
+                    &lt;xs:maxLength value="200" /&gt;
+                  &lt;/xs:restriction&gt;
+                &lt;/xs:simpleType&gt;
+              &lt;/xs:element&gt;
+              &lt;xs:element name="INV_NUM" minOccurs="0"&gt;
+                &lt;xs:simpleType&gt;
+                  &lt;xs:restriction base="xs:string"&gt;
+                    &lt;xs:maxLength value="50" /&gt;
+                  &lt;/xs:restriction&gt;
+                &lt;/xs:simpleType&gt;
+              &lt;/xs:element&gt;
+            &lt;/xs:sequence&gt;
+          &lt;/xs:complexType&gt;
+        &lt;/xs:element&gt;
+      &lt;/xs:choice&gt;
+    &lt;/xs:complexType&gt;
+  &lt;/xs:element&gt;
+&lt;/xs:schema&gt;</DataSample>
+</Command>
