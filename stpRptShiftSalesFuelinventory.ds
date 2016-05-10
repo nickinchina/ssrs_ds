@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-16"?>
+<Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <SQL>--Migrated by Lucky, On May.05,2016
+WITH fueltype AS (
+SELECT a.*,(POSITION('diesel' IN lower(a.name))=0)::int AS ftype 
+  FROM dim_fuelgrade a
+ WHERE CASE WHEN COALESCE(:p5, '')='' THEN true ELSE a.id = ANY(string_to_array(:p5,',')::int[]) END), 
+fuelsales AS (
+SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "StationID",
+       CASE WHEN :p1 = 'default' THEN b.name::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "Station",
+       a.trandate, a.varid, SUM(a.qty) AS qty, SUM(a.amount) AS amount, SUM(a.amount-a.cal_wcost*a.qty) AS profit, 
+       SUM(0 - COALESCE(a.tax, 0)) AS tax, CASE SUM(a.amount) WHEN 0 THEN 0 ELSE SUM(0 - COALESCE(a.tax, 0)) / SUM(a.amount) END AS taxrate, SUM(a.cal_wcost*a.qty) AS cal_wcost,c.ftype,c.name
+  FROM fact_fuel_sales a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN fueltype c ON a.varid = c.id 
+ WHERE a.siteid = ANY(string_to_array(:p2,',')::int[]) AND a.trandate &gt;= :p3 AND a.trandate &lt;= :p4
+ GROUP BY "StationID", "Station", a.trandate, a.varid,c.ftype,c.name),
+fuelinventory AS (
+SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "StationID",
+       CASE WHEN :p1 = 'default' THEN b.name::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "Station",
+       a.trandate, a.varid, SUM(a.grossqty) AS grossqty,  SUM(a.overshort) AS overshort, SUM(a.netqty) AS netqty, SUM(0-a.sold) AS sold, 
+       SUM(COALESCE(a.qty, 0) - (COALESCE(a.open, 0) + COALESCE(a.grossqty, 0) + COALESCE(a.sold, 0))) AS govershort, 
+       SUM(COALESCE(a.qty, 0) - (COALESCE(a.open, 0) + COALESCE(a.netqty, 0) + COALESCE(a.sold, 0))) AS novershort
+  FROM fact_fuel_inventory a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN fueltype c ON a.varid = c.id 
+ WHERE a.siteid = ANY(string_to_array(:p2,',')::int[]) AND a.trandate &gt;= :p3 AND a.trandate &lt;= :p4
+ GROUP BY "StationID", "Station", a.trandate, a.varid) 
+SELECT a.tax AS "DTW", (a.qty &lt;&gt; 0)::int AS "FSalesQty", (COALESCE(b.grossqty, 0) &lt;&gt; 0)::int AS "FInvCPG", (a.tax * a.ftype)::int AS "FuelDTW", 0::int AS "BillBasis",
+       a."StationID", a.trandate AS "SalesDate", a.name AS "SKU", a.qty AS "SalesQty", a.qty * a.ftype AS "SalesFuelQty", 
+       a.amount AS "SalesRevenue", a.amount * a.ftype AS "SalesFuelRevenue", a.profit AS "Profit", a.profit * a.ftype AS "FuelProfit",
+       a.taxrate AS "TaxRate", 'Fuel'::text AS "Class", a."Station", a.name AS "FuelName", 
+       COALESCE(b.grossqty, 0) AS "GPurchase", COALESCE(b.grossqty, 0) * a.ftype AS "GFuelPurchase", COALESCE(b.netqty, 0) AS "NPurchase", COALESCE(b.netqty, 0) * a.ftype AS "NFuelPurchase", 
+       COALESCE(b.sold, 0) AS "Sales", COALESCE(b.govershort, 0) AS "GOverShort", COALESCE(b.novershort, 0) AS "NOverShort", COALESCE(b.overshort, 0) AS "OverShort", COALESCE(b.overshort, 0) * a.ftype AS "FuelOverShort", 
+       (CASE a.qty WHEN 0 THEN 0 ELSE a.cal_wcost/a.qty END)::double precision AS "Cost", (CASE a.qty WHEN 0 THEN 0 ELSE a.amount/a.qty END)::double precision AS "Sell"
+  FROM fuelsales a LEFT OUTER JOIN fuelinventory b ON a."StationID" = b."StationID" AND a.trandate = b.trandate and a.varid=b.varid;</SQL>
+  <Parameters Name="DataSource" DbType="9" />
+  <Parameters Name="TaxonID" DbType="19" />
+  <Parameters Name="StationID" DbType="19" />
+  <Parameters Name="StartDate" DbType="7" />
+  <Parameters Name="EndDate" DbType="7" />
+  <Parameters Name="FuelGrade" DbType="19" />
+  <ColumnSchema>&lt;DocumentElement&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;DTW&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;1&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Decimal, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;FSalesQty&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;FInvCPG&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;3&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;FuelDTW&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;4&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;BillBasis&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;5&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;StationID&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;6&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SalesDate&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;7&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SKU&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;8&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SalesQty&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;9&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SalesFuelQty&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;10&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SalesRevenue&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;11&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Decimal, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SalesFuelRevenue&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;12&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Decimal, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Profit&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;13&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;FuelProfit&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;14&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;TaxRate&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;15&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Decimal, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Class&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;16&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Station&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;17&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;FuelName&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;18&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;GPurchase&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;19&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;GFuelPurchase&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;20&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;NPurchase&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;21&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;NFuelPurchase&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;22&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Sales&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;23&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;GOverShort&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;24&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;NOverShort&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;25&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;OverShort&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;26&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;FuelOverShort&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;27&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Cost&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;28&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Sell&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;29&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+&lt;/DocumentElement&gt;</ColumnSchema>
+  <DataSample>&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;xs:schema id="NewDataSet" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"&gt;
+  &lt;xs:element name="NewDataSet" msdata:IsDataSet="true" msdata:MainDataTable="stpRptShiftSalesFuelinventory" msdata:UseCurrentLocale="true"&gt;
+    &lt;xs:complexType&gt;
+      &lt;xs:choice minOccurs="0" maxOccurs="unbounded"&gt;
+        &lt;xs:element name="stpRptShiftSalesFuelinventory"&gt;
+          &lt;xs:complexType&gt;
+            &lt;xs:sequence&gt;
+              &lt;xs:element name="DTW" type="xs:decimal" minOccurs="0" /&gt;
+              &lt;xs:element name="FSalesQty" type="xs:int" minOccurs="0" /&gt;
+              &lt;xs:element name="FInvCPG" type="xs:int" minOccurs="0" /&gt;
+              &lt;xs:element name="FuelDTW" type="xs:int" minOccurs="0" /&gt;
+              &lt;xs:element name="BillBasis" type="xs:int" minOccurs="0" /&gt;
+              &lt;xs:element name="StationID" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="SalesDate" type="xs:dateTime" minOccurs="0" /&gt;
+              &lt;xs:element name="SKU" minOccurs="0"&gt;
+                &lt;xs:simpleType&gt;
+                  &lt;xs:restriction base="xs:string"&gt;
+                    &lt;xs:maxLength value="100" /&gt;
+                  &lt;/xs:restriction&gt;
+                &lt;/xs:simpleType&gt;
+              &lt;/xs:element&gt;
+              &lt;xs:element name="SalesQty" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="SalesFuelQty" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="SalesRevenue" type="xs:decimal" minOccurs="0" /&gt;
+              &lt;xs:element name="SalesFuelRevenue" type="xs:decimal" minOccurs="0" /&gt;
+              &lt;xs:element name="Profit" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="FuelProfit" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="TaxRate" type="xs:decimal" minOccurs="0" /&gt;
+              &lt;xs:element name="Class" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="Station" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="FuelName" minOccurs="0"&gt;
+                &lt;xs:simpleType&gt;
+                  &lt;xs:restriction base="xs:string"&gt;
+                    &lt;xs:maxLength value="100" /&gt;
+                  &lt;/xs:restriction&gt;
+                &lt;/xs:simpleType&gt;
+              &lt;/xs:element&gt;
+              &lt;xs:element name="GPurchase" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="GFuelPurchase" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="NPurchase" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="NFuelPurchase" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="Sales" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="GOverShort" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="NOverShort" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="OverShort" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="FuelOverShort" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="Cost" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="Sell" type="xs:double" minOccurs="0" /&gt;
+            &lt;/xs:sequence&gt;
+          &lt;/xs:complexType&gt;
+        &lt;/xs:element&gt;
+      &lt;/xs:choice&gt;
+    &lt;/xs:complexType&gt;
+  &lt;/xs:element&gt;
+&lt;/xs:schema&gt;</DataSample>
+</Command>

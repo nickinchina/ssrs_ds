@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-16"?>
+<Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <SQL>--Migrated by Lucky, On May.09,2016
+WITH year1 AS (
+SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "StationID",
+       CASE WHEN :p1 = 'default' THEN b.name::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "Station",
+       c.name AS "SKU", 
+       CASE WHEN :p6 = 0 THEN SUM(COALESCE(a.qty, 0) - (COALESCE(a.open, 0) + COALESCE(a.netqty, 0) + COALESCE(a.sold, 0))) 
+            ELSE SUM(COALESCE(a.qty, 0) - (COALESCE(a.open, 0) + COALESCE(a.grossqty, 0) + COALESCE(a.sold, 0))) END AS "Overshort"
+  FROM fact_fuel_inventory a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN dim_fuelgrade c ON a.varid = c.id
+ WHERE a.siteid = ANY(string_to_array(:p2,',')::int[]) AND a.varid = ANY(string_to_array(:p3,',')::int[])
+   AND to_char(a.trandate, 'YYYY')::int = :p4
+ GROUP BY "StationID", "Station", "SKU"), 
+year2 AS (
+SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "StationID",
+       CASE WHEN :p1 = 'default' THEN b.name::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "Station",
+       c.name AS "SKU", 
+       CASE WHEN :p6 = 0 THEN SUM(COALESCE(a.qty, 0) - (COALESCE(a.open, 0) + COALESCE(a.netqty, 0) + COALESCE(a.sold, 0))) 
+            ELSE SUM(COALESCE(a.qty, 0) - (COALESCE(a.open, 0) + COALESCE(a.grossqty, 0) + COALESCE(a.sold, 0))) END AS "Overshort"
+  FROM fact_fuel_inventory a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN dim_fuelgrade c ON a.varid = c.id
+ WHERE a.siteid = ANY(string_to_array(:p2,',')::int[]) AND a.varid = ANY(string_to_array(:p3,',')::int[])
+   AND to_char(a.trandate, 'YYYY')::int = :p5
+ GROUP BY "StationID", "Station", "SKU") 
+SELECT COALESCE(a."StationID", b."StationID") AS "StationID", COALESCE(a."Station", b."Station") AS "Station", COALESCE(a."SKU", b."SKU") AS "SKU", 
+       COALESCE(a."Overshort", 0)::double precision AS "Overshort1", COALESCE(b."Overshort", 0)::double precision AS "Overshort2"
+  FROM year1 a FULL OUTER JOIN year2 b ON a."StationID" = b."StationID" AND a."SKU" = b."SKU";</SQL>
+  <Parameters Name="DataSource" DbType="9" />
+  <Parameters Name="TaxonID" DbType="19" />
+  <Parameters Name="StationID" DbType="19" />
+  <Parameters Name="FuelName" DbType="19" />
+  <Parameters Name="Year1" DbType="9" />
+  <Parameters Name="Year2" DbType="9" />
+  <Parameters Name="OvershortType" DbType="9" />
+  <ColumnSchema>&lt;DocumentElement&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;StationID&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;1&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Station&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SKU&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;3&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Overshort1&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;4&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Overshort2&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;5&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+&lt;/DocumentElement&gt;</ColumnSchema>
+  <DataSample>&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;xs:schema id="NewDataSet" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"&gt;
+  &lt;xs:element name="NewDataSet" msdata:IsDataSet="true" msdata:MainDataTable="stpRptCompareFuelInventoryByPeriod" msdata:UseCurrentLocale="true"&gt;
+    &lt;xs:complexType&gt;
+      &lt;xs:choice minOccurs="0" maxOccurs="unbounded"&gt;
+        &lt;xs:element name="stpRptCompareFuelInventoryByPeriod"&gt;
+          &lt;xs:complexType&gt;
+            &lt;xs:sequence&gt;
+              &lt;xs:element name="StationID" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="Station" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="SKU" minOccurs="0"&gt;
+                &lt;xs:simpleType&gt;
+                  &lt;xs:restriction base="xs:string"&gt;
+                    &lt;xs:maxLength value="100" /&gt;
+                  &lt;/xs:restriction&gt;
+                &lt;/xs:simpleType&gt;
+              &lt;/xs:element&gt;
+              &lt;xs:element name="Overshort1" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="Overshort2" type="xs:double" minOccurs="0" /&gt;
+            &lt;/xs:sequence&gt;
+          &lt;/xs:complexType&gt;
+        &lt;/xs:element&gt;
+      &lt;/xs:choice&gt;
+    &lt;/xs:complexType&gt;
+  &lt;/xs:element&gt;
+&lt;/xs:schema&gt;</DataSample>
+</Command>
