@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-16"?>
+<Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <SQL>--Migrated by Lucky, On May.19,2016
+WITH fuelcte AS (
+SELECT a.siteid, b.name AS station, a.trandate, a.tranid, a.id, a.varid, c.name AS category, a.qty, a.cal_wcost
+  FROM fact_fuel_inventory a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN dim_fuelgrade c ON a.varid = c.id 
+ WHERE a.siteid = ANY(string_to_array(:p1, ',')::int[]) AND a.trandate &lt;= :p2), 
+fuelrow AS (
+SELECT a.*, row_number() OVER (PARTITION BY a.siteid, a.varid ORDER BY a.trandate DESC, a.tranid DESC, a.id DESC) AS row FROM fuelcte a), 
+fuelstk AS (
+SELECT a.siteid AS "StationID", a.station || ' #' || a.siteid AS "Station", 'Fuel'::text AS "Class", a.category AS "Category",
+       COALESCE(a.qty, 0)::double precision AS "QuantityInStock", COALESCE(a.cal_wcost, 0)::numeric(19,4) AS "WeightedCost"	
+  FROM fuelrow a WHERE a.row = 1), 
+itemcte AS (
+SELECT a.siteid, b.name AS station, a.trandate, a.tranid, a.id, a.varid, d.name AS category, a.cal_qtyonhand, a.cal_wcost
+  FROM fact_item_inventory a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN dim_item c ON a.varid = c.id INNER JOIN dim_category d on c.categoryid = d.id
+ WHERE b.id = ANY(string_to_array(:p1, ',')::int[]) AND a.trandate &lt;= :p2), 
+itemrow AS (
+SELECT a.*, row_number() OVER (PARTITION BY a.siteid, a.varid ORDER BY a.trandate DESC, a.tranid DESC, a.id DESC) AS row FROM itemcte a), 
+itemstk AS (
+SELECT a.siteid AS "StationID", a.station || ' #' || a.siteid AS "Station", 'C-Store'::text AS "Class", a.category AS "Category",
+       SUM(COALESCE(a.cal_qtyonhand, 0)::double precision) AS "QuantityInStock", SUM(COALESCE(a.cal_wcost, 0)::numeric(19,4)) AS "WeightedCost"	
+ FROM itemrow a WHERE a.row = 1 GROUP BY "StationID", "Station", "Category") 
+SELECT a.* FROM fuelstk a UNION ALL SELECT b.* FROM itemstk b;</SQL>
+  <Parameters Name="DataSource" DbType="9" />
+  <Parameters Name="StationID" DbType="19" />
+  <Parameters Name="EndDate" DbType="7" />
+  <ColumnSchema>&lt;DocumentElement&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;StationID&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;1&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Station&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Class&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;3&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Category&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;4&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;QuantityInStock&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;5&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;WeightedCost&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;6&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Decimal, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+&lt;/DocumentElement&gt;</ColumnSchema>
+  <DataSample>&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;xs:schema id="NewDataSet" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"&gt;
+  &lt;xs:element name="NewDataSet" msdata:IsDataSet="true" msdata:MainDataTable="stpRptStockOnHand" msdata:UseCurrentLocale="true"&gt;
+    &lt;xs:complexType&gt;
+      &lt;xs:choice minOccurs="0" maxOccurs="unbounded"&gt;
+        &lt;xs:element name="stpRptStockOnHand"&gt;
+          &lt;xs:complexType&gt;
+            &lt;xs:sequence&gt;
+              &lt;xs:element name="StationID" type="xs:int" minOccurs="0" /&gt;
+              &lt;xs:element name="Station" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="Class" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="Category" minOccurs="0"&gt;
+                &lt;xs:simpleType&gt;
+                  &lt;xs:restriction base="xs:string"&gt;
+                    &lt;xs:maxLength value="100" /&gt;
+                  &lt;/xs:restriction&gt;
+                &lt;/xs:simpleType&gt;
+              &lt;/xs:element&gt;
+              &lt;xs:element name="QuantityInStock" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="WeightedCost" type="xs:decimal" minOccurs="0" /&gt;
+            &lt;/xs:sequence&gt;
+          &lt;/xs:complexType&gt;
+        &lt;/xs:element&gt;
+      &lt;/xs:choice&gt;
+    &lt;/xs:complexType&gt;
+  &lt;/xs:element&gt;
+&lt;/xs:schema&gt;</DataSample>
+</Command>
