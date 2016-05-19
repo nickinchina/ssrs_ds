@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-16"?>
+<Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <SQL>--Migrated by Lucky, On May.19,2016
+
+--ShowType = 0, no used
+
+WITH mySales AS (
+SELECT b.id AS "StationID", b.name AS "Station", a.varid, c.name AS "SKU", a.trandate AS "SalesDate", a.qty AS "SalesQty",
+       CASE WHEN a.qty = 0 THEN 1 ELSE a.amount/a.qty END AS "Price", COALESCE(a.cal_wcost,0) AS "NewCost",
+       a.amount - COALESCE(a.cal_wcost,0) * a.qty AS "Profit"
+  FROM fact_fuel_sales a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN dim_fuelgrade c ON a.varid = c.id
+ WHERE a.siteid = ANY(string_to_array(:p1,',')::int[]) AND a.trandate &gt;= :p2 AND a.trandate &lt;= :p2 + :p3),
+myCompetitor AS (
+SELECT b.name AS "Competitor", a.fuelid, a.amount AS "CompetitorPrice", a.trandate AS "SalesDate", 
+       UNNEST(string_to_array(b.stores,',')::int[]) AS "StationID"
+  FROM fact_competitor_price a INNER JOIN dim_competitor b ON a.competitorid = b.id
+ WHERE b.stores IS NOT NULL AND a.trandate &gt;= :p2 AND a.trandate &lt;= :p2 + :p3),
+myRet AS (
+SELECT a.*, b."Competitor", b."CompetitorPrice"
+  FROM mySales a LEFT OUTER JOIN myCompetitor B 
+    ON a."StationID" = b."StationID" AND a."SalesDate" = b."SalesDate" AND a.varid = b.fuelid) 
+SELECT "StationID", "Station", "SKU", "SalesDate", 'My Price'::text AS "K", "Price" AS "V", 0 AS "LV" FROM mySales
+ UNION ALL
+SELECT "StationID", "Station", "SKU", "SalesDate", "Competitor"::text AS "K", "CompetitorPrice" AS "V", 1 AS "LV" FROM myRet WHERE "Competitor" IS NOT NULL
+ UNION ALL
+SELECT "StationID", "Station", "SKU", "SalesDate", 'My Cost'::text AS "K", "NewCost" AS "V", 2 AS "LV" FROM mySales 
+ UNION ALL
+SELECT "StationID", "Station", "SKU", "SalesDate", 'Margin CPG'::text AS "K", "Price" - "NewCost" AS "V", 3 AS "LV" FROM mySales 
+ UNION ALL
+SELECT "StationID", "Station", "SKU", "SalesDate", 'Volume GAL'::text AS "K", "SalesQty" AS "V", 4 AS "LV" FROM mySales 
+ UNION ALL 
+SELECT "StationID", "Station", "SKU", "SalesDate", 'Profit$'::text AS "K", "Profit" AS "V", 5 AS "LV" FROM mySales;</SQL>
+  <Parameters Name="DataSource" DbType="9" />
+  <Parameters Name="StationID" DbType="19" />
+  <Parameters Name="StartDate" DbType="7" />
+  <Parameters Name="EndDays" DbType="9" />
+  <Parameters Name="ShowType" DbType="9" />
+  <ColumnSchema>&lt;DocumentElement&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;StationID&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;1&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Station&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SKU&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;3&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SalesDate&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;4&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;K&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;5&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;V&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;6&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;LV&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;7&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+&lt;/DocumentElement&gt;</ColumnSchema>
+  <DataSample>&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;xs:schema id="NewDataSet" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"&gt;
+  &lt;xs:element name="NewDataSet" msdata:IsDataSet="true" msdata:MainDataTable="stpRptCompetitorPrices2" msdata:UseCurrentLocale="true"&gt;
+    &lt;xs:complexType&gt;
+      &lt;xs:choice minOccurs="0" maxOccurs="unbounded"&gt;
+        &lt;xs:element name="stpRptCompetitorPrices2"&gt;
+          &lt;xs:complexType&gt;
+            &lt;xs:sequence&gt;
+              &lt;xs:element name="StationID" type="xs:int" minOccurs="0" /&gt;
+              &lt;xs:element name="Station" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="SKU" minOccurs="0"&gt;
+                &lt;xs:simpleType&gt;
+                  &lt;xs:restriction base="xs:string"&gt;
+                    &lt;xs:maxLength value="100" /&gt;
+                  &lt;/xs:restriction&gt;
+                &lt;/xs:simpleType&gt;
+              &lt;/xs:element&gt;
+              &lt;xs:element name="SalesDate" type="xs:dateTime" minOccurs="0" /&gt;
+              &lt;xs:element name="K" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="V" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="LV" type="xs:int" minOccurs="0" /&gt;
+            &lt;/xs:sequence&gt;
+          &lt;/xs:complexType&gt;
+        &lt;/xs:element&gt;
+      &lt;/xs:choice&gt;
+    &lt;/xs:complexType&gt;
+  &lt;/xs:element&gt;
+&lt;/xs:schema&gt;</DataSample>
+</Command>
