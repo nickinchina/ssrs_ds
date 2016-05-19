@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-16"?>
+<Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <SQL>--Migrated by Lucky, On May.19,2016
+WITH fuelsales AS (
+SELECT SUM(a.qty) AS qty, SUM(a.amount) AS amount, SUM(a.amount - a.qty * COALESCE(a.cal_wcost, 0)) AS profit 
+  FROM fact_fuel_sales a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN dim_fuelgrade c ON a.varid = c.id
+ WHERE a.siteid = ANY(string_to_array(:p1,',')::int[]) AND a.trandate&gt;=:p2 AND a.trandate&lt;=:p3), 
+categorysales AS (
+SELECT SUM(a.qty) AS qty, SUM(a.amount) AS amount, SUM(a.amount - a.qty * COALESCE(a.cal_wcost, 0)) AS profit 
+  FROM fact_category_sales a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN dim_category c ON a.varid = c.id
+ WHERE a.siteid = ANY(string_to_array(:p1,',')::int[]) AND a.trandate&gt;=:p2 AND a.trandate&lt;=:p3), 
+totalsales AS (
+SELECT qty, amount, profit FROM fuelsales 
+ UNION ALL
+SELECT qty, amount, profit FROM categorysales) 
+SELECT SUM(qty) AS "SalesQty", SUM(amount) AS "SalesRevenue", SUM(profit) AS "Profit" FROM totalsales; </SQL>
+  <Parameters Name="DataSource" DbType="9" />
+  <Parameters Name="StationID" DbType="19" />
+  <Parameters Name="StartDate" DbType="7" />
+  <Parameters Name="EndDate" DbType="7" />
+  <ColumnSchema>&lt;DocumentElement&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SalesQty&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;1&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SalesRevenue&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Decimal, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Profit&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;3&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+&lt;/DocumentElement&gt;</ColumnSchema>
+  <DataSample>&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;xs:schema id="NewDataSet" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"&gt;
+  &lt;xs:element name="NewDataSet" msdata:IsDataSet="true" msdata:MainDataTable="stpRptShiftSalesSummary" msdata:UseCurrentLocale="true"&gt;
+    &lt;xs:complexType&gt;
+      &lt;xs:choice minOccurs="0" maxOccurs="unbounded"&gt;
+        &lt;xs:element name="stpRptShiftSalesSummary"&gt;
+          &lt;xs:complexType&gt;
+            &lt;xs:sequence&gt;
+              &lt;xs:element name="SalesQty" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="SalesRevenue" type="xs:decimal" minOccurs="0" /&gt;
+              &lt;xs:element name="Profit" type="xs:double" minOccurs="0" /&gt;
+            &lt;/xs:sequence&gt;
+          &lt;/xs:complexType&gt;
+        &lt;/xs:element&gt;
+      &lt;/xs:choice&gt;
+    &lt;/xs:complexType&gt;
+  &lt;/xs:element&gt;
+&lt;/xs:schema&gt;</DataSample>
+</Command>
