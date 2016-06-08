@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-16"?>
+<Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <SQL>--Migrated by Lucky, On Jun.08,2016
+WITH dimstore AS (SELECT a.id, a.name FROM dim_store a WHERE a.id = ANY(string_to_array(:p1,',')::int[]) ), 
+dimvendor AS (SELECT a.id FROM dim_vendor a WHERE a.name &lt;&gt; 'TI VENDOR' ), 
+dimcategory AS (SELECT a.name FROM dim_category a WHERE a.id = ANY(string_to_array(:p2,',')::int[]) ), 
+dimitem AS (SELECT a.id, a.upc, a.name FROM dim_item a INNER JOIN dimcategory b ON a.category = b.name ), 
+factitemprice AS (
+SELECT a.storeid AS siteid, a.varid, a.retail 
+  FROM fact_item_price a
+ WHERE a.storeid = ANY(string_to_array(:p1,',')::int[])), 
+factpurchase AS (
+SELECT DISTINCT a.varid, a.siteid, a.entityid FROM fact_item_purchase a 
+ WHERE a.trandate &gt;= :p3 AND a.trandate &lt;= :p4 ), 
+haspurchase AS (
+SELECT a.varid FROM factpurchase a INNER JOIN dimstore b ON a.siteid = b.id INNER JOIN dimvendor c ON a.entityid = c.id ), 
+factsales AS (
+SELECT DISTINCT a.varid, a.siteid FROM fact_item_sales a 
+ WHERE a.trandate &gt;= :p3 AND a.trandate &lt;= :p4 ), 
+hassales AS (
+SELECT a.varid FROM factsales a INNER JOIN dimstore b ON a.siteid = b.id ), 
+haspurnosales AS (
+SELECT DISTINCT a.varid FROM haspurchase a LEFT OUTER JOIN hassales b ON a.varid = b.varid WHERE b.varid IS NULL ) 
+SELECT d.upc AS "Item Number", d.name AS "Description", a.retail AS "Retail", c.id AS "StationID", c.name AS "Station" 
+  FROM factitemprice a INNER JOIN haspurnosales b ON a.varid = b.varid 
+ INNER JOIN dimstore c ON a.siteid = c.id INNER JOIN dimitem d ON b.varid = d.id; </SQL>
+  <Parameters Name="DataSource" DbType="9" />
+  <Parameters Name="StationID" DbType="19" />
+  <Parameters Name="Dept" DbType="19" />
+  <Parameters Name="StartDate" DbType="7" />
+  <Parameters Name="EndDate" DbType="7" />
+  <ColumnSchema>&lt;DocumentElement&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Item Number&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;1&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Description&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Retail&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;3&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Decimal, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;StationID&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;4&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Station&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;5&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+&lt;/DocumentElement&gt;</ColumnSchema>
+  <DataSample>&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;xs:schema id="NewDataSet" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"&gt;
+  &lt;xs:element name="NewDataSet" msdata:IsDataSet="true" msdata:MainDataTable="stpRptHasPurchaseNoSale" msdata:UseCurrentLocale="true"&gt;
+    &lt;xs:complexType&gt;
+      &lt;xs:choice minOccurs="0" maxOccurs="unbounded"&gt;
+        &lt;xs:element name="stpRptHasPurchaseNoSale"&gt;
+          &lt;xs:complexType&gt;
+            &lt;xs:sequence&gt;
+              &lt;xs:element name="Item_x0020_Number" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="Description" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="Retail" type="xs:decimal" minOccurs="0" /&gt;
+              &lt;xs:element name="StationID" type="xs:int" minOccurs="0" /&gt;
+              &lt;xs:element name="Station" type="xs:string" minOccurs="0" /&gt;
+            &lt;/xs:sequence&gt;
+          &lt;/xs:complexType&gt;
+        &lt;/xs:element&gt;
+      &lt;/xs:choice&gt;
+    &lt;/xs:complexType&gt;
+  &lt;/xs:element&gt;
+&lt;/xs:schema&gt;</DataSample>
+</Command>
