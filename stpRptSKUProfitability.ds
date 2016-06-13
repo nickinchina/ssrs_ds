@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-16"?>
+<Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <SQL>--Migrated by Lucky, On Jun.13,2016
+WITH skusales AS (
+SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "StationID",
+       CASE WHEN :p1 = 'default' THEN b.name::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "Station",
+       a.varid, c.upc AS "SKU", SUM(a.qty) AS "SalesQty", SUM(a.amount) AS "SalesAmount",
+       SUM(a.qty*a.cal_wcost)/(CASE WHEN SUM(a.qty) = 0 THEN 1 ELSE SUM(a.qty) END) AS "CostPer",
+       c.name AS "Description", c.category, c.subcategory
+  FROM fact_item_sales a INNER JOIN dim_store b ON a.siteid= b.id INNER JOIN dim_item c ON a.varid = c.id
+ WHERE a.siteid = ANY(string_to_array(:p2,',')::int[])
+   AND a.trandate &gt;= :p3 AND a.trandate &lt;= :p4 
+   AND c.categoryid = ANY(string_to_array(:p5,',')::int[])
+ GROUP BY "StationID", "Station", a.varid, c.upc, c.name, c.category, c.subcategory),
+puradj AS (
+SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "StationID",
+       CASE WHEN :p1 = 'default' THEN b.name::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "Station",
+       a.varid, SUM(a.qty) AS adjqty 
+  FROM fact_item_purchase a INNER JOIN dim_store b ON a.siteid= b.id INNER JOIN dim_vendor c ON a.entityid = c.id
+ WHERE c.name = 'ti vendor' AND a.siteid = ANY(string_to_array(:p2,',')::int[]) 
+   AND a.trandate &gt;= :p3 AND a.trandate &lt;= :p4 
+ GROUP BY "StationID", "Station", a.varid)
+SELECT t1."StationID", t1."Station", t1."SKU", t1."SalesQty", COALESCE(t2.adjqty, 0) AS adjqty, t1."SalesAmount",
+       t1."CostPer", t1."Description", t1.category AS "Category", t1.subcategory as "Sub Category"
+  FROM skusales t1 LEFT JOIN puradj t2 ON t1."StationID" = t2."StationID" AND t1.varid = t2.varid;
+</SQL>
+  <Parameters Name="DataSource" DbType="9" />
+  <Parameters Name="TaxonID" DbType="19" />
+  <Parameters Name="StationID" DbType="19" />
+  <Parameters Name="StartDate" DbType="7" />
+  <Parameters Name="EndDate" DbType="7" />
+  <Parameters Name="Category" DbType="19" />
+  <ColumnSchema>&lt;DocumentElement&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;StationID&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;1&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Station&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SKU&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;3&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SalesQty&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;4&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;adjqty&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;5&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SalesAmount&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;6&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Decimal, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;CostPer&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;7&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Description&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;8&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Category&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;9&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Sub Category&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;10&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+&lt;/DocumentElement&gt;</ColumnSchema>
+  <DataSample>&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;xs:schema id="NewDataSet" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"&gt;
+  &lt;xs:element name="NewDataSet" msdata:IsDataSet="true" msdata:MainDataTable="stpRptSKUProfitability" msdata:UseCurrentLocale="true"&gt;
+    &lt;xs:complexType&gt;
+      &lt;xs:choice minOccurs="0" maxOccurs="unbounded"&gt;
+        &lt;xs:element name="stpRptSKUProfitability"&gt;
+          &lt;xs:complexType&gt;
+            &lt;xs:sequence&gt;
+              &lt;xs:element name="StationID" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="Station" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="SKU" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="SalesQty" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="adjqty" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="SalesAmount" type="xs:decimal" minOccurs="0" /&gt;
+              &lt;xs:element name="CostPer" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="Description" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="Category" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="Sub_x0020_Category" type="xs:string" minOccurs="0" /&gt;
+            &lt;/xs:sequence&gt;
+          &lt;/xs:complexType&gt;
+        &lt;/xs:element&gt;
+      &lt;/xs:choice&gt;
+    &lt;/xs:complexType&gt;
+  &lt;/xs:element&gt;
+&lt;/xs:schema&gt;</DataSample>
+</Command>
