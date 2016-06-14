@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-16"?>
+<Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <SQL>--Migrated by Lucky, On Jun.14,2016
+WITH lastSales AS (
+SELECT b.siteid 
+      ,b.trandate 
+      ,b.varid
+      ,-b.tranqty as tranqty
+  FROM (SELECT a.*,row_number() over (partition by a.siteid,  a.varid ORDER BY a.trandate DESC) AS rownum  
+          FROM fact_item a
+         WHERE a.cal_type = 20) b
+ WHERE b.rownum=1),
+lastPurchase AS (
+SELECT b.siteid 
+      ,b.trandate
+      ,b.varid
+      ,b.tranqty 
+  FROM (SELECT *,row_number() over (partition by a.siteid, a.varid ORDER BY a.trandate DESC) AS rownum  
+          FROM fact_item a
+         WHERE a.cal_type=10 AND a.entityid=0) b
+ WHERE b.rownum=1),
+lastPrice AS (
+SELECT a.storeid
+      ,a.varid 
+      ,a.retail
+  FROM fact_item_price a
+ WHERE a.packsize=1)
+SELECT t2.siteid as "StationID"
+      ,t1.varid as "Item Number"
+      ,t5.category as "Category"
+      ,t5.name as "Description"
+      ,t2.trandate as "lastSalesDate"
+      ,t2.tranqty as "LastSalesQty"
+      ,t3.trandate as "LastPurchaseDate"
+      ,t3.tranqty as "LastPurchaseQty"
+      ,t1.qtyonhand as "QtyInStock"
+      ,t1.wcost as "LastCost"
+      ,t4.retail as "CurrentRetail"
+      ,t6.name as "Station"
+  FROM fact_item_balance t1 
+ INNER JOIN dim_item t5  on t1.varid = t5.id
+  LEFT JOIN lastSales t2 on t1.siteid = t2.siteid and t2.varid = t5.id 
+  LEFT JOIN lastPurchase t3 on t1.siteid = t3.siteid and t3.varid = t5.id 
+  LEFT JOIN lastPrice t4 on t1.siteid = t4.storeid and t1.varid = t4.varid
+ INNER JOIN dim_store t6 on t1.siteid = t6.id		
+ WHERE t1.siteid = any(string_to_array(:p1,',')::int[])
+   AND t2.trandate IS NOT NULL 
+   AND (t2.trandate + cast(cast(:p2 as character varying) as interval) || ' day')::timestamp  &lt; now()
+   --and (t2.lastSalesDate is null or dateadd(d, @days, t2.lastSalesDate) &lt; GETDATE())
+   AND t5.categoryid = any(string_to_array(:p3,',')::int[]) 	
+   AND t1.qtyonhand &lt;&gt; 0;</SQL>
+  <Parameters Name="DataSource" DbType="9" />
+  <Parameters Name="StationID" DbType="19" />
+  <Parameters Name="Days" DbType="9" />
+  <Parameters Name="Dept" DbType="19" />
+  <ColumnSchema>&lt;DocumentElement&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;StationID&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;1&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Item Number&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Category&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;3&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Description&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;4&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;lastSalesDate&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;5&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;LastSalesQty&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;6&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;LastPurchaseDate&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;7&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;LastPurchaseQty&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;8&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;QtyInStock&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;9&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;LastCost&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;10&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Decimal, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;CurrentRetail&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;11&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Decimal, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Station&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;12&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+&lt;/DocumentElement&gt;</ColumnSchema>
+  <DataSample>&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;xs:schema id="NewDataSet" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"&gt;
+  &lt;xs:element name="NewDataSet" msdata:IsDataSet="true" msdata:MainDataTable="stpRptZeroSold" msdata:UseCurrentLocale="true"&gt;
+    &lt;xs:complexType&gt;
+      &lt;xs:choice minOccurs="0" maxOccurs="unbounded"&gt;
+        &lt;xs:element name="stpRptZeroSold"&gt;
+          &lt;xs:complexType&gt;
+            &lt;xs:sequence&gt;
+              &lt;xs:element name="StationID" type="xs:int" minOccurs="0" /&gt;
+              &lt;xs:element name="Item_x0020_Number" type="xs:int" minOccurs="0" /&gt;
+              &lt;xs:element name="Category" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="Description" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="lastSalesDate" type="xs:dateTime" minOccurs="0" /&gt;
+              &lt;xs:element name="LastSalesQty" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="LastPurchaseDate" type="xs:dateTime" minOccurs="0" /&gt;
+              &lt;xs:element name="LastPurchaseQty" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="QtyInStock" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="LastCost" type="xs:decimal" minOccurs="0" /&gt;
+              &lt;xs:element name="CurrentRetail" type="xs:decimal" minOccurs="0" /&gt;
+              &lt;xs:element name="Station" type="xs:string" minOccurs="0" /&gt;
+            &lt;/xs:sequence&gt;
+          &lt;/xs:complexType&gt;
+        &lt;/xs:element&gt;
+      &lt;/xs:choice&gt;
+    &lt;/xs:complexType&gt;
+  &lt;/xs:element&gt;
+&lt;/xs:schema&gt;</DataSample>
+</Command>
