@@ -4,15 +4,17 @@
 SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "StationID",
        CASE WHEN :p1 = 'default' THEN b.name::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "Station",
        c.name AS "FuelName", CASE WHEN :p5=0 THEN to_char(a.trandate,'YYYY-MM') ELSE to_char(a.trandate,'MM/DD/YYYY') END AS "TimePeriod",
-       a.tranref AS "FuelInvoiceNumber",
+       --a.tranref AS "FuelInvoiceNumber",
+       a.tranref AS "InvoiceNo",
        SUM(CASE COALESCE((a.props-&gt;&gt;'gross')::boolean, false) WHEN true THEN COALESCE((a.props-&gt;&gt;'qtyalt')::double precision, 0) ELSE a.qty END) AS "NetQty", 
        SUM(CASE COALESCE((a.props-&gt;&gt;'gross')::boolean, false) WHEN true THEN a.qty ELSE COALESCE((a.props-&gt;&gt;'qtyalt')::double precision, 0) END) AS "GrossQty", 
        SUM(a.qty) AS "Qty", SUM(a.amount) AS "Revenue", SUM(COALESCE(a.cal_wcost, 0) * a.qty) AS "Cost", 
        SUM(a.amount + COALESCE(a.tax, 0) - COALESCE(a.cal_wcost, 0) * a.qty - COALESCE((a.props-&gt;&gt;'vtax')::numeric(19,4), 0)) AS "Profit", 
-       SUM(COALESCE((a.props-&gt;&gt;'vtax')::numeric(19,4), 0)) AS "TCost", SUM(COALESCE(a.tax, 0)) AS "TRevenue"
+       SUM(COALESCE((a.props-&gt;&gt;'vtax')::numeric(19,4), 0)) AS "TCost", SUM(COALESCE(a.tax, 0)) AS "TRevenue",
+       SUM(a.qty) AS "QtySell"
   FROM fact_fuel_wsales a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN dim_fuelgrade c ON a.varid = c.id
  WHERE a.siteid = ANY(string_to_array(:p2,',')::int[]) AND a.trandate &gt;= :p3 AND a.trandate &lt;= :p4
- GROUP BY "StationID", "Station", "FuelName", "TimePeriod", "FuelInvoiceNumber";
+ GROUP BY "StationID", "Station", "FuelName", "TimePeriod", a.tranref;
 </SQL>
   <Parameters Name="DataSource" DbType="9" />
   <Parameters Name="TaxonID" DbType="19" />
@@ -42,7 +44,7 @@ SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path
     &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
   &lt;/SchemaTable&gt;
   &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;FuelInvoiceNumber&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;InvoiceNo&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;5&lt;/ColumnOrdinal&gt;
     &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
   &lt;/SchemaTable&gt;
@@ -86,6 +88,11 @@ SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path
     &lt;ColumnOrdinal&gt;13&lt;/ColumnOrdinal&gt;
     &lt;DataType&gt;System.Decimal, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
   &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;QtySell&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;14&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
 &lt;/DocumentElement&gt;</ColumnSchema>
   <DataSample>&lt;?xml version="1.0" encoding="utf-16"?&gt;
 &lt;xs:schema id="NewDataSet" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"&gt;
@@ -105,7 +112,7 @@ SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path
                 &lt;/xs:simpleType&gt;
               &lt;/xs:element&gt;
               &lt;xs:element name="TimePeriod" type="xs:string" minOccurs="0" /&gt;
-              &lt;xs:element name="FuelInvoiceNumber" minOccurs="0"&gt;
+              &lt;xs:element name="InvoiceNo" minOccurs="0"&gt;
                 &lt;xs:simpleType&gt;
                   &lt;xs:restriction base="xs:string"&gt;
                     &lt;xs:maxLength value="50" /&gt;
@@ -120,6 +127,7 @@ SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path
               &lt;xs:element name="Profit" type="xs:double" minOccurs="0" /&gt;
               &lt;xs:element name="TCost" type="xs:decimal" minOccurs="0" /&gt;
               &lt;xs:element name="TRevenue" type="xs:decimal" minOccurs="0" /&gt;
+              &lt;xs:element name="QtySell" type="xs:double" minOccurs="0" /&gt;
             &lt;/xs:sequence&gt;
           &lt;/xs:complexType&gt;
         &lt;/xs:element&gt;
