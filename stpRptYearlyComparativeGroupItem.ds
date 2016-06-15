@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-16"?>
+<Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <SQL>--Migrated by Lucky, On Jun.15,2016
+WITH opt AS (
+SELECT CASE WHEN :p2=0 THEN (CASE WHEN :p1=2 THEN 2 WHEN :p1=3 THEN 3 ELSE 1 END)
+       WHEN :p2=1 THEN (CASE WHEN :p1=2 THEN 2 WHEN :p1=3 THEN 4 ELSE 1 END)
+       ELSE (CASE WHEN :p1=3 THEN 3 ELSE 4 END) END AS opt
+)
+SELECT a.id::text as id, a.name FROM dim_category a, opt b WHERE b.opt = 1
+UNION ALL
+SELECT a.id::text as id, a.name FROM dim_subcategory a, opt b WHERE b.opt = 2
+UNION ALL
+SELECT a.id::text as id, a.name FROM dim_taxon a, opt b WHERE a.type = 0 AND b.opt = 3
+UNION ALL
+SELECT ' ' AS id, '(Ignore)' AS name FROM opt b WHERE b.opt = 4
+ORDER BY name;</SQL>
+  <Parameters Name="DataSource" DbType="9" />
+  <Parameters Name="GroupBy" DbType="9" />
+  <Parameters Name="Options" DbType="9" />
+  <ColumnSchema>&lt;DocumentElement&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;id&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;1&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;name&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+&lt;/DocumentElement&gt;</ColumnSchema>
+  <DataSample>&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;xs:schema id="NewDataSet" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"&gt;
+  &lt;xs:element name="NewDataSet" msdata:IsDataSet="true" msdata:MainDataTable="stpRptYearlyComparativeGroupItem" msdata:UseCurrentLocale="true"&gt;
+    &lt;xs:complexType&gt;
+      &lt;xs:choice minOccurs="0" maxOccurs="unbounded"&gt;
+        &lt;xs:element name="stpRptYearlyComparativeGroupItem"&gt;
+          &lt;xs:complexType&gt;
+            &lt;xs:sequence&gt;
+              &lt;xs:element name="id" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="name" type="xs:string" minOccurs="0" /&gt;
+            &lt;/xs:sequence&gt;
+          &lt;/xs:complexType&gt;
+        &lt;/xs:element&gt;
+      &lt;/xs:choice&gt;
+    &lt;/xs:complexType&gt;
+  &lt;/xs:element&gt;
+&lt;/xs:schema&gt;</DataSample>
+</Command>
