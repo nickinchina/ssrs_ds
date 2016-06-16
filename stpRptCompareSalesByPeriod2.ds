@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-16"?>
+<Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <SQL>--Migrated by Lucky, On Jun.16,2016
+WITH dim_master AS (
+SELECT a.id, a.name FROM dim_category a 
+ WHERE :p8 NOT IN (2,3) AND (CASE WHEN length(:p3)&gt;3000 THEN '' ELSE :p3 END = '' OR a.id = ANY(string_to_array(CASE WHEN length(:p3)&gt;3000 THEN '' ELSE :p3 END,',')::int[]))
+UNION ALL
+SELECT a.id, a.name FROM dim_subcategory a 
+ WHERE :p8=2 AND (CASE WHEN length(:p3)&gt;3000 THEN '' ELSE :p3 END = '' OR a.id = ANY(string_to_array(CASE WHEN length(:p3)&gt;3000 THEN '' ELSE :p3 END,',')::int[]))
+/*
+UNION ALL
+SELECT a.id, json_extract_path_text(a.taxons, :p3)::text AS name FROM dim_item a 
+ WHERE :p8=3 AND json_extract_path_text(a.taxons, :p3) IS NOT NULL
+*/
+),
+period11 AS (
+SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "StationID",
+       CASE WHEN :p1 = 'default' THEN b.name::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "Station",
+       c.name AS "Item", SUM(a.qty) AS "SalesQty", SUM(a.amount) AS "SalesRevenue", SUM(a.amount-cal_wcost*qty) AS "Profit"
+  FROM fact_category_sales a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN dim_master c ON a.varid = c.id 
+ WHERE :p8 NOT IN (2,3) AND a.siteid = ANY(string_to_array(:p2,',')::int[])
+   AND a.trandate&gt;=:p4 AND a.trandate&lt;=:p5
+ GROUP BY "StationID", "Station", "Item"), 
+period12 AS (
+SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "StationID",
+       CASE WHEN :p1 = 'default' THEN b.name::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "Station",
+       c.name AS "Item", SUM(a.qty) AS "SalesQty", SUM(a.amount) AS "SalesRevenue", SUM(a.amount-cal_wcost*qty) AS "Profit"
+  FROM fact_category_sales a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN dim_master c ON a.varid = c.id 
+ WHERE :p8 NOT IN (2,3) AND a.siteid = ANY(string_to_array(:p2,',')::int[])
+   AND a.trandate&gt;=:p6 AND a.trandate&lt;=:p7
+ GROUP BY "StationID", "Station", "Item"), 
+data1 AS (
+SELECT COALESCE(a."StationID", b."StationID") AS "StationID", COALESCE(a."Station", b."Station") AS "Station", COALESCE(a."Item", b."Item") AS "Item", 
+       COALESCE(a."SalesQty", 0)::double precision AS "SalesQty1", COALESCE(a."SalesRevenue", 0)::double precision AS "SalesRevenue1", COALESCE(a."Profit", 0)::double precision AS "Profit1", 
+       COALESCE(b."SalesQty", 0)::double precision AS "SalesQty2", COALESCE(b."SalesRevenue", 0)::double precision AS "SalesRevenue2", COALESCE(b."Profit", 0)::double precision AS "Profit2" 
+  FROM period11 a FULL OUTER JOIN period12 b ON a."StationID" = b."StationID" AND a."Item" = b."Item"),
+    
+period21 AS (
+SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "StationID",
+       CASE WHEN :p1 = 'default' THEN b.name::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "Station",
+       c.name AS "Item", SUM(a.qty) AS "SalesQty", SUM(a.amount) AS "SalesRevenue", SUM(a.amount-cal_wcost*qty) AS "Profit"
+  FROM fact_category_sales a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN dim_master c ON a.varid = c.id 
+ WHERE :p8=2 AND a.siteid = ANY(string_to_array(:p2,',')::int[])
+   AND a.trandate&gt;=:p4 AND a.trandate&lt;=:p5
+ GROUP BY "StationID", "Station", "Item"), 
+period22 AS (
+SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "StationID",
+       CASE WHEN :p1 = 'default' THEN b.name::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "Station",
+       c.name AS "Item", SUM(a.qty) AS "SalesQty", SUM(a.amount) AS "SalesRevenue", SUM(a.amount-cal_wcost*qty) AS "Profit"
+   FROM fact_category_sales a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN dim_master c ON a.varid = c.id 
+  WHERE :p8=2 AND a.siteid = ANY(string_to_array(:p2,',')::int[])
+    AND a.trandate&gt;=:p6 AND a.trandate&lt;=:p7
+  GROUP BY "StationID", "Station", "Item"), 
+data2 AS (
+SELECT COALESCE(a."StationID", b."StationID") AS "StationID", COALESCE(a."Station", b."Station") AS "Station", COALESCE(a."Item", b."Item") AS "Item", 
+       COALESCE(a."SalesQty", 0)::double precision AS "SalesQty1", COALESCE(a."SalesRevenue", 0)::double precision AS "SalesRevenue1", COALESCE(a."Profit", 0)::double precision AS "Profit1", 
+       COALESCE(b."SalesQty", 0)::double precision AS "SalesQty2", COALESCE(b."SalesRevenue", 0)::double precision AS "SalesRevenue2", COALESCE(b."Profit", 0)::double precision AS "Profit2" 
+  FROM period21 a FULL OUTER JOIN period22 b ON a."StationID" = b."StationID" AND a."Item" = b."Item"), 
+period31 AS (
+SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "StationID",
+       CASE WHEN :p1 = 'default' THEN b.name::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "Station",
+       c.name AS "Item", SUM(a.qty) AS "SalesQty", SUM(a.amount) AS "SalesRevenue", SUM(a.amount-cal_wcost*qty) AS "Profit"
+  FROM fact_item_sales a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN dim_master c ON a.varid = c.id 
+ WHERE :p8=3 AND a.siteid = ANY(string_to_array(:p2,',')::int[])
+   AND a.trandate&gt;=:p4 AND a.trandate&lt;=:p5
+ GROUP BY "StationID", "Station", "Item"), 
+period32 AS (
+SELECT CASE WHEN :p1 = 'default' THEN b.id::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "StationID",
+       CASE WHEN :p1 = 'default' THEN b.name::text ELSE COALESCE(json_extract_path_text(b.taxons, :p1),'(blank)')::text END AS "Station",
+       c.name AS "Item", SUM(a.qty) AS "SalesQty", SUM(a.amount) AS "SalesRevenue", SUM(a.amount-cal_wcost*qty) AS "Profit"
+ FROM fact_item_sales a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN dim_master c ON a.varid = c.id 
+WHERE :p8=3 AND a.siteid = ANY(string_to_array(:p2,',')::int[])
+  AND a.trandate&gt;=:p6 AND a.trandate&lt;=:p7
+GROUP BY "StationID", "Station", "Item"), 
+data3 AS (
+SELECT COALESCE(a."StationID", b."StationID") AS "StationID", COALESCE(a."Station", b."Station") AS "Station", COALESCE(a."Item", b."Item") AS "Item", 
+       COALESCE(a."SalesQty", 0)::double precision AS "SalesQty1", COALESCE(a."SalesRevenue", 0)::double precision AS "SalesRevenue1", COALESCE(a."Profit", 0)::double precision AS "Profit1", 
+       COALESCE(b."SalesQty", 0)::double precision AS "SalesQty2", COALESCE(b."SalesRevenue", 0)::double precision AS "SalesRevenue2", COALESCE(b."Profit", 0)::double precision AS "Profit2" 
+ FROM period31 a FULL OUTER JOIN period32 b ON a."StationID" = b."StationID" AND a."Item" = b."Item")
+SELECT * FROM data1 WHERE :p8 NOT IN (2,3)
+UNION ALL
+SELECT * FROM data2 WHERE :p8=2
+/*
+UNION ALL
+SELECT * FROM data3 WHERE :p8=3
+*/
+;</SQL>
+  <Parameters Name="DataSource" DbType="9" />
+  <Parameters Name="TaxonID" DbType="19" />
+  <Parameters Name="StationID" DbType="19" />
+  <Parameters Name="Filters" DbType="19" />
+  <Parameters Name="StartDate1" DbType="7" />
+  <Parameters Name="EndDate1" DbType="7" />
+  <Parameters Name="StartDate2" DbType="7" />
+  <Parameters Name="EndDate2" DbType="7" />
+  <Parameters Name="GroupBy" DbType="9" />
+  <ColumnSchema>&lt;DocumentElement&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;StationID&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;1&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Station&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Item&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;3&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SalesQty1&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;4&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SalesRevenue1&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;5&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Profit1&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;6&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SalesQty2&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;7&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SalesRevenue2&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;8&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Profit2&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;9&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+&lt;/DocumentElement&gt;</ColumnSchema>
+  <DataSample>&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;xs:schema id="NewDataSet" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"&gt;
+  &lt;xs:element name="NewDataSet" msdata:IsDataSet="true" msdata:MainDataTable="stpRptCompareSalesByPeriod2" msdata:UseCurrentLocale="true"&gt;
+    &lt;xs:complexType&gt;
+      &lt;xs:choice minOccurs="0" maxOccurs="unbounded"&gt;
+        &lt;xs:element name="stpRptCompareSalesByPeriod2"&gt;
+          &lt;xs:complexType&gt;
+            &lt;xs:sequence&gt;
+              &lt;xs:element name="StationID" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="Station" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="Item" minOccurs="0"&gt;
+                &lt;xs:simpleType&gt;
+                  &lt;xs:restriction base="xs:string"&gt;
+                    &lt;xs:maxLength value="100" /&gt;
+                  &lt;/xs:restriction&gt;
+                &lt;/xs:simpleType&gt;
+              &lt;/xs:element&gt;
+              &lt;xs:element name="SalesQty1" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="SalesRevenue1" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="Profit1" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="SalesQty2" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="SalesRevenue2" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="Profit2" type="xs:double" minOccurs="0" /&gt;
+            &lt;/xs:sequence&gt;
+          &lt;/xs:complexType&gt;
+        &lt;/xs:element&gt;
+      &lt;/xs:choice&gt;
+    &lt;/xs:complexType&gt;
+  &lt;/xs:element&gt;
+&lt;/xs:schema&gt;</DataSample>
+</Command>
