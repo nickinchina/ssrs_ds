@@ -3,7 +3,7 @@
   <SQL>--Migrated by Lucky, On Jun.20,2016
 --stpRptDailyReconciliationSales @Fuel=0
 --fact_fuel_sales missing field: ApproveForBillingOn, ClosePump, ClosePumpVal, PumpTest, PumpTestVal
-SELECT b.id AS "StationID", b.name AS "Stationd", a.trandate AS "SalesDate", 'Fuel' AS "Sub Category", c.name AS "Description", c.name AS "SKU",
+SELECT b.id AS "StationID", b.name AS "Station", a.trandate AS "SalesDate", 'Fuel' AS "Sub Category", c.name AS "Description", c.name AS "SKU",
        a.qty AS "SalesQty", a.amount AS "SalesRevenue", a.cal_wcost AS "Cost", a.amount - a.cal_wcost * a.qty AS "Profit", -a.tax / (a.amount + a.tax) AS "TaxRate", 'Fuel' AS "Class", 'N' AS "Aproved",
        0 AS "ClosePump", 0 AS "ClosePumpVal", 0 AS "PumpTest", 0 AS "PumpTestVal", 0 AS "OpenPump", 0 AS "OpenPumpVal"
   FROM fact_fuel_sales a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN dim_fuelgrade c ON a.varid = c.id
@@ -20,7 +20,7 @@ SELECT b.id AS "StationID", b.name AS "Stationd", a.trandate AS "SalesDate", 'Fu
     &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
   &lt;/SchemaTable&gt;
   &lt;SchemaTable&gt;
-    &lt;ColumnName&gt;Stationd&lt;/ColumnName&gt;
+    &lt;ColumnName&gt;Station&lt;/ColumnName&gt;
     &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
     &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
   &lt;/SchemaTable&gt;
@@ -119,7 +119,7 @@ SELECT b.id AS "StationID", b.name AS "Stationd", a.trandate AS "SalesDate", 'Fu
           &lt;xs:complexType&gt;
             &lt;xs:sequence&gt;
               &lt;xs:element name="StationID" type="xs:int" minOccurs="0" /&gt;
-              &lt;xs:element name="Stationd" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="Station" type="xs:string" minOccurs="0" /&gt;
               &lt;xs:element name="SalesDate" type="xs:dateTime" minOccurs="0" /&gt;
               &lt;xs:element name="Sub_x0020_Category" type="xs:string" minOccurs="0" /&gt;
               &lt;xs:element name="Description" minOccurs="0"&gt;
