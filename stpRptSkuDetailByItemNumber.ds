@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-16"?>
+<Command xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <SQL>--Migrated by Lucky, On Jun.22,2016
+WITH dimitem AS (
+SELECT a.id, a.name, a.sku FROM dim_item a INNER JOIN dim_subcategory b ON a.subcategory = b.name
+ WHERE b.id = ANY(string_to_array(:p5,',')::int[]) 
+   AND CASE WHEN COALESCE(:p4,'')='' THEN COALESCE(:p4,'')='' ELSE a.name LIKE :p4 || '%' END
+)
+SELECT b.id AS "StationID", b.name AS "Station", c.sku AS "SKU", c.name AS "Description",
+       a.trandate AS "SalesDate", a.qty AS "Qty", COALESCE(d.qtyonhand,0) AS "QtyOnHand",
+       CASE WHEN a.qty=0 THEN 0 ELSE a.amount/a.qty END AS "Retail", a.cal_wcost AS "Cost",
+       (a.amount - a.qty*a.cal_wcost)/(CASE WHEN a.amount=0 THEN 1 ELSE a.amount END) AS "Profit"
+  FROM fact_item_sales a INNER JOIN dim_store b ON a.siteid = b.id INNER JOIN dimitem c ON a.varid = c.id
+  LEFT OUTER JOIN fact_item_balance d ON a.siteid = d.siteid AND a.varid = d.varid
+ WHERE a.siteid = ANY(string_to_array(:p1,',')::int[])
+   AND a.trandate &gt;= :p2 AND a.trandate &lt;= :p3
+ ORDER BY c.name, a.trandate DESC;</SQL>
+  <Parameters Name="DataSource" DbType="9" />
+  <Parameters Name="StationID" DbType="19" />
+  <Parameters Name="StartDate" DbType="7" />
+  <Parameters Name="EndDate" DbType="7" />
+  <Parameters Name="ItemNumber" DbType="19" />
+  <Parameters Name="SubCategory" DbType="19" />
+  <ColumnSchema>&lt;DocumentElement&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;StationID&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;1&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Station&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;2&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SKU&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;3&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Description&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;4&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;SalesDate&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;5&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.DateTime, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Qty&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;6&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;QtyOnHand&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;7&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Retail&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;8&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Cost&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;9&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Decimal, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+  &lt;SchemaTable&gt;
+    &lt;ColumnName&gt;Profit&lt;/ColumnName&gt;
+    &lt;ColumnOrdinal&gt;10&lt;/ColumnOrdinal&gt;
+    &lt;DataType&gt;System.Double, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089&lt;/DataType&gt;
+  &lt;/SchemaTable&gt;
+&lt;/DocumentElement&gt;</ColumnSchema>
+  <DataSample>&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;xs:schema id="NewDataSet" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"&gt;
+  &lt;xs:element name="NewDataSet" msdata:IsDataSet="true" msdata:MainDataTable="stpRptSkuDetailByItemNumber" msdata:UseCurrentLocale="true"&gt;
+    &lt;xs:complexType&gt;
+      &lt;xs:choice minOccurs="0" maxOccurs="unbounded"&gt;
+        &lt;xs:element name="stpRptSkuDetailByItemNumber"&gt;
+          &lt;xs:complexType&gt;
+            &lt;xs:sequence&gt;
+              &lt;xs:element name="StationID" type="xs:int" minOccurs="0" /&gt;
+              &lt;xs:element name="Station" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="SKU" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="Description" type="xs:string" minOccurs="0" /&gt;
+              &lt;xs:element name="SalesDate" type="xs:dateTime" minOccurs="0" /&gt;
+              &lt;xs:element name="Qty" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="QtyOnHand" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="Retail" type="xs:double" minOccurs="0" /&gt;
+              &lt;xs:element name="Cost" type="xs:decimal" minOccurs="0" /&gt;
+              &lt;xs:element name="Profit" type="xs:double" minOccurs="0" /&gt;
+            &lt;/xs:sequence&gt;
+          &lt;/xs:complexType&gt;
+        &lt;/xs:element&gt;
+      &lt;/xs:choice&gt;
+    &lt;/xs:complexType&gt;
+  &lt;/xs:element&gt;
+&lt;/xs:schema&gt;</DataSample>
+</Command>
